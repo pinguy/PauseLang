@@ -85,12 +85,12 @@ Something that *haunts* your main program while it runs.
 
 ---
 
-## ⚡ Quick Start
+## 🚀 Quick Start
+
+Clone the repo:
 
 ```bash
-# Run the REPL
-python3 PauseLang_v0.6.x.py
-
-# Select a demo
-Choice (1-8): 2   # Dragon Detector
+git clone https://github.com/pinguy/PauseLang
+cd PauseLang
+python3 PauseLang_v0.6.3.py
 
