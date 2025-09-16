@@ -87,10 +87,12 @@ Something that *haunts* your main program while it runs.
 
 ## 🚀 Quick Start
 
+Absolute addressing and loop-stack leak fix in v6.4
+
 Clone the repo:
 
 ```bash
 git clone https://github.com/pinguy/PauseLang
 cd PauseLang
-python3 PauseLang_v0.6.3.py
+python3 PauseLang_v0.6.4.py
 
