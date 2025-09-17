@@ -1,7 +1,11 @@
 """
-PauseLang v0.6.7 - Jump Addressing Fix
-=======================================
-Critical fix:
+PauseLang v0.6.7 - Unconditional Jump
+======================================
+New in v0.6.7:
+- Added JUMP/JMP unconditional jump instruction (pause 0.31)
+  No more hacks to guarantee a jump!
+
+Critical fix (v0.6.7):
 - Fixed jump/call addressing to compensate for sync offset
   (Labels are compiled with absolute PCs, but VM strips sync)
 
@@ -17,12 +21,6 @@ Previous features (v0.6.6):
 - Instruction aliases and macros
 - Enhanced disassembler
 - Clear division/modulo semantics
-
-Previous fixes (v0.6.5):
-- Stack underflow protection
-- LOOP_START memory management
-- SKIP_NEXT implementation
-- SETIX uses stack value
 """
 
 import time
@@ -195,6 +193,9 @@ INSTRUCTIONS = {
     # System
     0.29: Instruction('NOP', 0.29, '[SYSTEM] No operation', OpCategory.SYSTEM, updates_flags=False),
     0.30: Instruction('HALT', 0.30, '[SYSTEM] Halt execution', OpCategory.SYSTEM, updates_flags=False, modifies_flow=True),
+    
+    # Unconditional Jump (NEW!)
+    0.31: Instruction('JUMP', 0.31, '[CONTROL] Unconditional jump', OpCategory.CONTROL, updates_flags=False, modifies_flow=True),
     
     # IX Register - HYBRID/STACK OPS
     0.40: Instruction('SETIX', 0.40, '[STACK] Pop stack → IX register', OpCategory.STACK, updates_flags=False, requires_stack=1, stack_delta=-1),
@@ -526,7 +527,15 @@ class PauseLangVM:
             prev_value = data_stream[self.state.pc - 1] if self.state.pc > 0 else None
 
             # Control flow handling (with offset compensation and bounds checking)
-            if instr.opcode == 'JUMP_IF_ODD' and self.state.flags[Flag.ODD]:
+            if instr.opcode == 'JUMP':
+                target = value - base_offset
+                if not (0 <= target < len(data_stream)):
+                    self.push_trap(TrapCode.INVALID_INSTRUCTION)
+                    result = f"INVALID JUMP TARGET {value}"
+                else:
+                    self.state.pc = target - 1
+                    result = f"JUMPED to {value}"
+            elif instr.opcode == 'JUMP_IF_ODD' and self.state.flags[Flag.ODD]:
                 target = value - base_offset
                 if not (0 <= target < len(data_stream)):
                     self.push_trap(TrapCode.INVALID_INSTRUCTION)
@@ -686,7 +695,7 @@ class PauseLangVM:
         # Compact explanation
         phrases, current = [], []
         for step in self.execution_trace:
-            if step['opcode'] in ['JUMP_IF_ODD','JUMP_IF_ZERO','SKIP_NEXT','LOOP_START','LOOP_END','CALL','RET','HALT']:
+            if step['opcode'] in ['JUMP','JUMP_IF_ODD','JUMP_IF_ZERO','SKIP_NEXT','LOOP_START','LOOP_END','CALL','RET','HALT']:
                 if current: 
                     phrases.append(self._summarize_phrase(current))
                     current = []
@@ -710,6 +719,7 @@ class PauseLangCompiler:
         'DROP': 'POP',             # Common stack term
         'PEEK': 'DUP',             # Non-destructive read
         'DROPS': 'CLEAR_STACK',    # Clear all
+        'JMP': 'JUMP',             # Unconditional jump shorthand
         'JOD': 'JUMP_IF_ODD',      # Shorthand
         'JZ': 'JUMP_IF_ZERO',      # Shorthand
         'JNZ': 'JUMP_IF_ODD',      # Jump if not zero (via ODD flag)
@@ -969,10 +979,33 @@ class TortureTests:
         return "✓ LOOP memory management passed"
     
     @staticmethod
+    def test_unconditional_jump():
+        """Test new JUMP instruction"""
+        source = """
+        main:
+            CONST 100
+            JMP skip      # Unconditional jump
+            CONST 200     # Should be skipped
+            CONST 300     # Should be skipped
+        skip:
+            CONST 400
+            HALT
+        """
+        pauses, data, comments, labels = PauseLangCompiler.compile(source)
+        vm = PauseLangVM(debug=False)
+        result = vm.execute(data, pauses, labels=labels)
+        
+        stack = result['final_state']['stack']
+        assert stack == [100, 400], f"JUMP failed: {stack}"
+        assert 200 not in stack and 300 not in stack, f"Failed to skip: {stack}"
+        return "✓ Unconditional JUMP passed"
+    
+    @staticmethod
     def run_all():
         tests = [
             TortureTests.test_labels,
             TortureTests.test_aliases,
+            TortureTests.test_unconditional_jump,
             TortureTests.test_division_semantics,
             TortureTests.test_jitter_gauntlet,
             TortureTests.test_flag_race,
@@ -1306,7 +1339,7 @@ def main():
         print("Running default demo...")
         TortureTests.run_all()
     
-    print("\n✨ PauseLang v0.6.7 ready - All tests pass!")
+    print("\n✨ PauseLang v0.6.7 ready - Unconditional jumps added!")
 
 if __name__ == "__main__":
     main()
