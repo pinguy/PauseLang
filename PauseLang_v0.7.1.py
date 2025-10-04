@@ -219,8 +219,8 @@ INSTRUCTION_CONVENTIONS = """
 ║                                                              ║
 ║ STORE CONVENTION:                                            ║
 ║ • Operand specifies memory slot (0-255)                      ║
-║ • Value comes from TOS (not popped)                          ║
-║ • Example: STORE 42  →  mem[42] = stack[top]                 ║
+║ • Value comes from TOS (now popped!)                         ║
+║ • Example: STORE 42  →  stack.pop() → mem[42]                ║
 ║                                                              ║
 ║ META vs DATA LANE:                                           ║
 ║ • DATA lane: Memory ops use modulo (STORE 300 → slot 44)     ║
@@ -236,14 +236,13 @@ INSTRUCTION_CONVENTIONS = """
 ║ • SETF 0 - Sets flags from TOS without changing value        ║
 ║   (Warning: SETF k with k≠0 adds k to TOS and sets flags)    ║
 ║ • INC/DEC - Increment/decrement TOS                         ║
-║ • STOREI_POP - Store at IX then pop                         ║
 ║ • JUMP/JMP - Unconditional jump                              ║
 ║ • NOT - Arithmetic NOT (1 - TOS); not bitwise or strict boolean (use logic patterns for strict) ║
 ║                                                              ║
 ║ STACK HYGIENE TIP:                                           ║
-║ • STORE peeks TOS (doesn't pop) for flexibility.             ║
-║ • Use DROP or STOREI_POP to clean stack in loops.            ║
-║ • Avoid leaks to prevent GAS_EXHAUSTED in heavy arithmetic.  ║
+║ • STORE and STOREI now pop, improving stack hygiene.         ║
+║ • No need for an extra DROP after a store.                   ║
+║ • Loops are now cleaner and less prone to stack leaks.       ║
 ║                                                              ║
 ║ ALIAS RULES:                                                 ║
 ║ • Aliases are compile-time static; no runtime redefinition.  ║
@@ -464,7 +463,8 @@ class PauseLangVM:
                         return result
                 else:
                     slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
-                store_value = self.state.stack[-1]
+
+                store_value = self.state.stack.pop()  # 🔥 FIXED: now pops instead of peeks
                 if 0 <= slot < SPEC['max_memory_slots']:
                     self.state.memory[slot] = store_value
                     result = f"STORED {store_value} @ {slot}"
@@ -511,7 +511,7 @@ class PauseLangVM:
                 self.push_trap(TrapCode.STACK_UNDERFLOW)
                 result = "STACK_UNDERFLOW"
             else:
-                v = self.state.stack[-1]
+                v = self.state.stack.pop()  # 🔥 FIXED: pop instead of peek
                 self.state.memory[self.state.ix] = v
                 result = f"STORED {v} at mem[{self.state.ix}]"
         elif opcode == 'INCIX':
@@ -776,7 +776,7 @@ class PauseLangCompiler:
         'SQUARED':   ['DUP', 'MUL2'],                # Square TOS
         'ENTER':     ['PUSH', 'SWAP'],               # Enter frame
         'LEAVE':     ['SWAP', 'POP'],                # Leave frame
-        'STOREI_POP':['STOREI', 'POP'],              # Store and pop
+        'STOREI_POP':['STOREI', 'POP'],              # Store and pop - Obsolete with fix, kept for compatibility
         'NOT':       [('PUSH', 1), 'SWAP', 'SUB2'],  # Arithmetic NOT (1 - TOS); not bitwise or strict boolean (use logic patterns for strict)
         'SETF':      [('PUSH', 0), 'ADD2'],          # Set flags from TOS (add zero)
     }
@@ -1161,29 +1161,34 @@ def demo_labels():
     print("=" * 60)
     
     source = """
-    # Factorial calculator using labels
+    # Factorial calculator using labels (FIXED for popping STORE)
     main:
         CONST 5          # Calculate 5!
+        STORE 0          # Store N in mem[0]
         CONST 1          # Accumulator
-    
+        STORE 1          # Store accumulator in mem[1]
+
     loop:
-        SWAP             # Put counter on top
-        DUP              # Check if done
-        JZ done          # Exit if counter = 0
+        LOAD 0           # Load N to check for zero
+        SETF 0           # Set flags based on N
+        JZ done          # If N=0, we are done
         
-        DEC              # Decrement counter (macro)
-        SWAP             # Put accumulator on top
+        # N is on the stack from the check, we can use it
+        LOAD 1           # Load accumulator, stack: [N, acc]
+        SWAP             # Swap to get N on top, stack: [acc, N]
+        MUL2             # acc * N, stack: [acc*N]
+        STORE 1          # Store new accumulator, stack: []
         
-        # Multiply accumulator by (counter + 1)
-        PUSH 1
-        PUSH 2
-        ADD2             # Stack: acc, counter, counter+1
-        MUL2             # Stack: counter, acc*(counter+1)
+        LOAD 0           # Load N again to decrement
+        DEC              # N-1, stack: [N-1]
+        STORE 0          # Store new N, stack: []
         
-        JUMP_IF_ODD loop # Always jump (we know result is odd)
+        JMP loop         # Repeat
         
     done:
-        DROP             # Remove counter
+        # After JZ, the stack will have the last N (which is 0) from LOAD
+        DROP             # Get rid of the 0
+        LOAD 1           # Load final result
         HALT             # Result on stack
     """
     
@@ -1329,7 +1334,7 @@ def main():
 """)
     print("\nSelect mode:")
     print("1. Run torture tests (all should pass!)")
-    print("2. Label-based control flow demo")
+    print("2. Label-based control flow demo (Factorial with fixed STORE)")
     print("3. Enhanced supervisor demo")
     print("4. Show instruction reference")
     print("5. Show division/modulo examples")
@@ -1408,3 +1413,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
