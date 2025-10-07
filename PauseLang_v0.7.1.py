@@ -1,10 +1,10 @@
 """
-PauseLang v0.7.1 - Minor Polish
+PauseLang v0.7.2 - Bugfix
 ======================================
-Changes in v0.7.1:
-- Clarified NOT macro docs: arithmetic (1 - TOS), not bitwise/strict boolean.
-- Added dedicated traps: INVALID_JUMP (10), INVALID_CALL (11).
-- Retained all v0.7.0 features.
+Changes in v0.7.2:
+- FIXED: `LOAD` instruction now correctly pushes the loaded value onto the stack.
+- FIXED: `LOAD` instruction definition updated with `stack_delta=1` for proper pre-execution overflow checks.
+- Retained all v0.7.1 features.
 
 Original features from v0.6.7 retained.
 """
@@ -20,7 +20,7 @@ from math import exp
 # === FORMAL SPECIFICATION ===
 
 SPEC = {
-    'version': '0.7.1',
+    'version': '0.7.2',
     'word_size': 32,
     'overflow': 'wrap',
     'division': 'truncate',  # Truncate toward zero
@@ -160,8 +160,8 @@ INSTRUCTIONS = {
     0.15: Instruction('LOOP_END', 0.15, '[CONTROL] Loop if stack[top] > 0', OpCategory.CONTROL, updates_flags=False, modifies_flow=True),
     
     # Memory - HYBRID OPS (use both operand and stack)
-    0.16: Instruction('STORE', 0.16, '[HYBRID] Store TOS at mem[operand]', OpCategory.HYBRID, updates_flags=False),
-    0.17: Instruction('LOAD', 0.17, '[HYBRID] Load mem[operand] to result', OpCategory.HYBRID),
+    0.16: Instruction('STORE', 0.16, '[HYBRID] Store TOS at mem[operand]', OpCategory.HYBRID, updates_flags=False, requires_stack=1, stack_delta=-1),
+    0.17: Instruction('LOAD', 0.17, '[HYBRID] Load mem[operand] to stack', OpCategory.HYBRID, stack_delta=1),
     0.18: Instruction('SWAP', 0.18, '[STACK] Swap top two', OpCategory.STACK, updates_flags=False, requires_stack=2),
     0.19: Instruction('CLEAR_STACK', 0.19, '[STACK] Clear entire stack', OpCategory.STACK, updates_flags=False),
     
@@ -188,7 +188,7 @@ INSTRUCTIONS = {
     # IX Register - HYBRID/STACK OPS
     0.40: Instruction('SETIX', 0.40, '[STACK] Pop stack → IX register', OpCategory.STACK, updates_flags=False, requires_stack=1, stack_delta=-1),
     0.41: Instruction('LOADI', 0.41, '[STACK] Push mem[IX] to stack', OpCategory.STACK, updates_flags=True, stack_delta=1),
-    0.42: Instruction('STOREI', 0.42, '[HYBRID] Store TOS at mem[IX]', OpCategory.HYBRID, updates_flags=False, requires_stack=1),
+    0.42: Instruction('STOREI', 0.42, '[HYBRID] Store TOS at mem[IX]', OpCategory.HYBRID, updates_flags=False, requires_stack=1, stack_delta=-1),
     0.43: Instruction('INCIX', 0.43, '[SYSTEM] IX = (IX + 1) % max_slots', OpCategory.SYSTEM, updates_flags=False),
     0.44: Instruction('GETIX', 0.44, '[STACK] Push IX register to stack', OpCategory.STACK, updates_flags=False, stack_delta=1),
     
@@ -464,7 +464,7 @@ class PauseLangVM:
                 else:
                     slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
 
-                store_value = self.state.stack.pop()  # 🔥 FIXED: now pops instead of peeks
+                store_value = self.state.stack.pop()
                 if 0 <= slot < SPEC['max_memory_slots']:
                     self.state.memory[slot] = store_value
                     result = f"STORED {store_value} @ {slot}"
@@ -480,7 +480,10 @@ class PauseLangVM:
                     return result
             else:
                 slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
-            result = self.state.memory.get(slot, 0)
+            
+            loaded_value = self.state.memory.get(slot, 0)
+            self.state.stack.append(loaded_value)
+            result = loaded_value
         
         # System operations
         elif opcode == 'SET_META':
@@ -505,13 +508,13 @@ class PauseLangVM:
         elif opcode == 'LOADI':
             v = self.state.memory.get(self.state.ix, 0)
             self.state.stack.append(v)
-            result = f"LOADED {v} from mem[{self.state.ix}]"
+            result = v
         elif opcode == 'STOREI':
             if not self.state.stack:
                 self.push_trap(TrapCode.STACK_UNDERFLOW)
                 result = "STACK_UNDERFLOW"
             else:
-                v = self.state.stack.pop()  # 🔥 FIXED: pop instead of peek
+                v = self.state.stack.pop()
                 self.state.memory[self.state.ix] = v
                 result = f"STORED {v} at mem[{self.state.ix}]"
         elif opcode == 'INCIX':
@@ -1076,7 +1079,7 @@ class TortureTests:
             TortureTests.test_loop_memory,
             TortureTests.test_fuzz,
         ]
-        print("\n🔥 TORTURE TEST SUITE v0.7.1 🔥")
+        print("\n🔥 TORTURE TEST SUITE v0.7.2 🔥")
         print("=" * 50)
         passed = 0
         failed = 0
@@ -1157,11 +1160,11 @@ def demo_flag_patterns():
 
 def demo_labels():
     """Demonstrate label-based programming"""
-    print("\n🏷️ LABEL-BASED CONTROL FLOW DEMO")
+    print("\n🏷️ LABEL-BASED CONTROL FLOW DEMO (FACTORIAL)")
     print("=" * 60)
     
     source = """
-    # Factorial calculator using labels (FIXED for popping STORE)
+    # Factorial calculator (now works with fixed LOAD)
     main:
         CONST 5          # Calculate 5!
         STORE 0          # Store N in mem[0]
@@ -1169,17 +1172,15 @@ def demo_labels():
         STORE 1          # Store accumulator in mem[1]
 
     loop:
-        LOAD 0           # Load N to check for zero
+        LOAD 0           # Load N to check for zero (pushes N to stack)
         SETF 0           # Set flags based on N
         JZ done          # If N=0, we are done
         
         # N is on the stack from the check, we can use it
         LOAD 1           # Load accumulator, stack: [N, acc]
-        SWAP             # Swap to get N on top, stack: [acc, N]
-        MUL2             # acc * N, stack: [acc*N]
-        STORE 1          # Store new accumulator, stack: []
+        MUL2             # N * acc, stack: [N*acc]
+        STORE 1          # Store new accumulator, stack: [N]
         
-        LOAD 0           # Load N again to decrement
         DEC              # N-1, stack: [N-1]
         STORE 0          # Store new N, stack: []
         
@@ -1195,17 +1196,18 @@ def demo_labels():
     print("Source code:")
     print(source)
     
-    pauses, data, comments, labels = PauseLangCompiler.compile(source, debug=True)
+    pauses, data, comments, labels = PauseLangCompiler.compile(source, debug=False)
     
     print("\nLabels resolved:")
     for label, pc in labels.items():
         print(f"  {label:10} → PC {pc}")
     
-    vm = PauseLangVM(debug=True)
+    vm = PauseLangVM(debug=False) # Set to True for step-by-step
     result = vm.execute(data, pauses, labels=labels)
     
     print(f"\nResult: {result['final_state']['stack']}")
     print("Expected: [120] (5! = 120)")
+    assert result['final_state']['stack'] == [120]
 
 def demo_supervisor_enhanced():
     """Enhanced supervisor with better debugging"""
@@ -1328,13 +1330,13 @@ def demo_instruction_reference():
 def main():
     print(f"""
 ╔═══════════════════════════════════════════════════════════╗
-║  PauseLang {SPEC['version']} - Minor Polish                 ║
-║  All fixes applied; ready for production                 ║
+║  PauseLang {SPEC['version']} - Bugfix                       ║
+║  LOAD instruction is now stack-aware.                    ║
 ╚═══════════════════════════════════════════════════════════╝
 """)
     print("\nSelect mode:")
     print("1. Run torture tests (all should pass!)")
-    print("2. Label-based control flow demo (Factorial with fixed STORE)")
+    print("2. Label-based control flow demo (Factorial with fixed LOAD)")
     print("3. Enhanced supervisor demo")
     print("4. Show instruction reference")
     print("5. Show division/modulo examples")
@@ -1406,11 +1408,10 @@ def main():
         except Exception as e:
             print(f"Error: {e}")
     else:
-        print("Running default demo...")
+        print("Running default demo (tests)...")
         TortureTests.run_all()
     
-    print("\n✨ PauseLang v0.7.1 polished - Ready for action!")
+    print("\n✨ PauseLang v0.7.2 fixed - Ready for action!")
 
 if __name__ == "__main__":
     main()
-
