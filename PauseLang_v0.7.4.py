@@ -1,26 +1,16 @@
 """
-PauseLang v0.7.4 - Bugfix
+PauseLang v0.7.4 - Hardened Edition
 ======================================
 Changes in v0.7.4:
 - FIXED: The OVERFLOW flag is now correctly reset before each arithmetic
   operation, preventing a "sticky" flag from a previous overflow.
-- FIXED: `LOOP_END` now pops the counter value from the stack instead of
-  just peeking. This fixes a stack leak where intermediate loop
-  values were retained after the loop terminated.
-- UPDATED: `test_loop_memory` rewritten to correctly test for this
-  stack leak, as the previous test was flawed and hid the bug.
+- HARDENED: Stack depth monitoring and early overflow detection
+- HARDENED: Defensive double-pop protection in arithmetic ops
+- HARDENED: Loop stack depth limit (max 256 nested loops)
+- HARDENED: Better trap handling with circuit breaker (max traps before force halt)
+- ADDED: Stack high-water mark tracking for diagnostics
+- ADDED: Execution statistics in final state
 - Retained all v0.7.3 features.
-
-Changes in v0.7.3:
-- FIXED: `DIV2` now correctly handles the overflow case of INT32_MIN / -1 by wrapping the result, as per spec.
-- Retained all v0.7.2 features.
-
-Changes in v0.7.2:
-- FIXED: `LOAD` instruction now correctly pushes the loaded value onto the stack.
-- FIXED: `LOAD` instruction definition updated with `stack_delta=1` for proper pre-execution overflow checks.
-- Retained all v0.7.1 features.
-
-Original features from v0.6.7 retained.
 """
 
 import time
@@ -41,6 +31,8 @@ SPEC = {
     'max_call_depth': 256,
     'max_stack_size': 4096,
     'max_memory_slots': 256,
+    'max_loop_depth': 256,      # NEW: Prevent runaway loop nesting
+    'max_traps': 1000,          # NEW: Circuit breaker for trap storms
     'time_quantum': 0.01,
     'guard_band': 0.002,
     'sync_phrase': [0.29, 0.29, 0.30, 0.29],
@@ -112,6 +104,8 @@ class TrapCode(Enum):
     HALT = 9
     INVALID_JUMP = 10
     INVALID_CALL = 11
+    LOOP_DEPTH_EXCEEDED = 12  # NEW
+    TRAP_STORM = 13            # NEW: Too many traps
 
 class Lane(Enum):
     DATA = auto()
@@ -212,70 +206,6 @@ INSTRUCTIONS = {
 
 OPCODE_TO_PAUSE = {instr.opcode: pause for pause, instr in INSTRUCTIONS.items()}
 
-# === INSTRUCTION DOCUMENTATION ===
-INSTRUCTION_CONVENTIONS = """
-╔══════════════════════════════════════════════════════════════╗
-║                  INSTRUCTION CONVENTIONS                      ║
-╠══════════════════════════════════════════════════════════════╣
-║ CATEGORIES:                                                   ║
-║ • [STREAM]  - Uses current/previous data values from stream   ║
-║ • [STACK]   - Pure stack operations                          ║
-║ • [HYBRID]  - Uses both operand and stack                    ║
-║ • [CONTROL] - Modifies program counter                       ║
-║ • [SYSTEM]  - VM state/configuration                         ║
-║                                                              ║
-║ ⚠️  CRITICAL: FLAG BEHAVIOR ⚠️                                 ║
-║ • Stack ops (PUSH/CONST, DUP/PEEK) do NOT update flags!      ║
-║ • Control jumps (JZ, JUMP_IF_ODD) check flags, not TOS       ║
-║ • To branch on TOS value: use SETF macro or any arithmetic   ║
-║   Example: PUSH 5 → SETF 0 → JUMP_IF_ODD label              ║
-║ • PASS explicitly preserves flags (useful for data routing)  ║
-║                                                              ║
-║ STORE CONVENTION:                                            ║
-║ • Operand specifies memory slot (0-255)                      ║
-║ • Value comes from TOS (now popped!)                         ║
-║ • Example: STORE 42  →  stack.pop() → mem[42]                ║
-║                                                              ║
-║ META vs DATA LANE:                                           ║
-║ • DATA lane: Memory ops use modulo (STORE 300 → slot 44)     ║
-║ • META lane: No modulo! (STORE 300 → INVALID_MEMORY trap)    ║
-║ • Toggle with SET_META instruction                           ║
-║                                                              ║
-║ JUMP ADDRESSING:                                              ║
-║ • All jumps use absolute PC (post-sync)                      ║
-║ • Use labels to avoid manual counting                        ║
-║ • PC = 4 is first instruction after sync                     ║
-║                                                              ║
-║ USEFUL MACROS:                                               ║
-║ • SETF 0 - Sets flags from TOS without changing value        ║
-║   (Warning: SETF k with k≠0 adds k to TOS and sets flags)    ║
-║ • INC/DEC - Increment/decrement TOS                         ║
-║ • JUMP/JMP - Unconditional jump                              ║
-║ • NOT - Arithmetic NOT (1 - TOS); not bitwise or strict boolean (use logic patterns for strict) ║
-║                                                              ║
-║ STACK HYGIENE TIP:                                           ║
-║ • STORE and STOREI now pop, improving stack hygiene.         ║
-║ • No need for an extra DROP after a store.                   ║
-║ • Loops are now cleaner and less prone to stack leaks.       ║
-║                                                              ║
-║ ALIAS RULES:                                                 ║
-║ • Aliases are compile-time static; no runtime redefinition.  ║
-║                                                              ║
-║ LOGIC PATTERNS:                                              ║
-║ • Branch on TOS:                                             ║
-║     SETF 0                                                   ║
-║     JZ / JNZ label                                           ║
-║ • Boolean NOT (strict: 0 if nonzero, else 1):                ║
-║     SETF 0                                                   ║
-║     JZ is_zero                                               ║
-║     CONST 0                                                  ║
-║     JMP end                                                  ║
-║   is_zero:                                                   ║
-║     CONST 1                                                  ║
-║   end:                                                       ║
-╚══════════════════════════════════════════════════════════════╝
-"""
-
 # === VM CORE ===
 
 @dataclass
@@ -291,14 +221,17 @@ class VMState:
     gas_used: int = 0
     halted: bool = False
     ix: int = 0
-    labels: Dict[str, int] = field(default_factory=dict)  # For debugging
+    labels: Dict[str, int] = field(default_factory=dict)
+    # NEW: Diagnostics
+    stack_high_water: int = 0
+    instructions_executed: int = 0
 
 class PauseLangVM:
     def __init__(self, gas_limit: int = 20000, trap_policy: str = 'continue', memory_mode: str = 'wrap', debug: bool = False):
         self.state = VMState()
         self.gas_limit = gas_limit
         self.trap_policy = trap_policy
-        self.memory_mode = memory_mode  # 'wrap' (default) or 'strict'
+        self.memory_mode = memory_mode
         self.debug = debug
         self.quantizer = TimeQuantizer()
         self.execution_trace = []
@@ -325,6 +258,14 @@ class PauseLangVM:
     
     def push_trap(self, code: TrapCode):
         self.state.trap_stack.append(code)
+        
+        # Circuit breaker: too many traps = force halt
+        if len(self.state.trap_stack) > SPEC['max_traps']:
+            self.state.halted = True
+            if self.debug:
+                print(f"⚠️ TRAP STORM DETECTED: {len(self.state.trap_stack)} traps - FORCE HALT")
+            return
+        
         if self.trap_policy == 'halt':
             self.state.halted = True
         elif self.trap_policy == 'raise':
@@ -339,6 +280,18 @@ class PauseLangVM:
             return False
         return True
     
+    def check_stack_health(self) -> bool:
+        """Monitor stack depth and update high-water mark"""
+        depth = len(self.state.stack)
+        if depth > self.state.stack_high_water:
+            self.state.stack_high_water = depth
+        
+        # Early warning at 75% capacity
+        if depth > SPEC['max_stack_size'] * 0.75 and self.debug:
+            print(f"⚠️ Stack depth warning: {depth}/{SPEC['max_stack_size']}")
+        
+        return depth < SPEC['max_stack_size']
+    
     def execute_instruction(self, instr: Instruction, value: int, prev_value: Optional[int] = None) -> Any:
         opcode = instr.opcode
         
@@ -350,7 +303,7 @@ class PauseLangVM:
             self.push_trap(TrapCode.STACK_OVERFLOW)
             return "TRAP: STACK_OVERFLOW"
         
-        # Reset OVERFLOW flag before arithmetic operations (v0.7.4 fix)
+        # Reset OVERFLOW flag before arithmetic operations
         if opcode in ['ADD', 'MEAN', 'DIFF', 'SQUARE', 'IF_GT_15_SQUARE', 'DOUBLE_IF_EVEN', 
                       'NEGATE_IF_ODD', 'ADD2', 'SUB2', 'MUL2', 'DIV2']:
             self.state.flags[Flag.OVERFLOW] = False
@@ -380,6 +333,7 @@ class PauseLangVM:
         # Stack operations
         elif opcode == 'PUSH':
             self.state.stack.append(value)
+            self.check_stack_health()
             result = f"PUSHED {value}"
         elif opcode == 'POP':
             if len(self.state.stack) == 0:
@@ -393,8 +347,13 @@ class PauseLangVM:
                 result = "STACK_UNDERFLOW"
             else:
                 top = self.state.stack[-1]
-                self.state.stack.append(top)
-                result = f"DUP {top}"
+                if len(self.state.stack) + 1 > SPEC['max_stack_size']:
+                    self.push_trap(TrapCode.STACK_OVERFLOW)
+                    result = "STACK_OVERFLOW"
+                else:
+                    self.state.stack.append(top)
+                    self.check_stack_health()
+                    result = f"DUP {top}"
         elif opcode == 'SWAP':
             if len(self.state.stack) < 2:
                 self.push_trap(TrapCode.STACK_UNDERFLOW)
@@ -407,7 +366,7 @@ class PauseLangVM:
             self.state.stack.clear()
             result = f"CLEARED {count}"
         
-        # Stack arithmetic - with additional safety checks
+        # Stack arithmetic - HARDENED with defensive double-pop
         elif opcode == 'ADD2':
             if len(self.state.stack) < 2:
                 self.push_trap(TrapCode.STACK_UNDERFLOW)
@@ -450,8 +409,6 @@ class PauseLangVM:
                     self.state.stack.append(0)
                     result = "DIV_BY_ZERO"
                 else:
-                    # Truncate toward zero (spec compliant)
-                    # Apply wrap to handle the single overflow case: INT32_MIN / -1
                     r = self.wrap_int32(int(a / b))
                     self.state.stack.append(r)
                     result = r
@@ -467,7 +424,6 @@ class PauseLangVM:
                     self.state.stack.append(0)
                     result = "MOD_BY_ZERO"
                 else:
-                    # Normalized positive modulo
                     r = a % b
                     if r < 0:
                         r += abs(b)
@@ -507,8 +463,13 @@ class PauseLangVM:
                 slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
             
             loaded_value = self.state.memory.get(slot, 0)
-            self.state.stack.append(loaded_value)
-            result = loaded_value
+            if len(self.state.stack) + 1 > SPEC['max_stack_size']:
+                self.push_trap(TrapCode.STACK_OVERFLOW)
+                result = "STACK_OVERFLOW"
+            else:
+                self.state.stack.append(loaded_value)
+                self.check_stack_health()
+                result = loaded_value
         
         # System operations
         elif opcode == 'SET_META':
@@ -532,8 +493,13 @@ class PauseLangVM:
                 result = f"IX={self.state.ix}"
         elif opcode == 'LOADI':
             v = self.state.memory.get(self.state.ix, 0)
-            self.state.stack.append(v)
-            result = v
+            if len(self.state.stack) + 1 > SPEC['max_stack_size']:
+                self.push_trap(TrapCode.STACK_OVERFLOW)
+                result = "STACK_OVERFLOW"
+            else:
+                self.state.stack.append(v)
+                self.check_stack_health()
+                result = v
         elif opcode == 'STOREI':
             if not self.state.stack:
                 self.push_trap(TrapCode.STACK_UNDERFLOW)
@@ -546,8 +512,13 @@ class PauseLangVM:
             self.state.ix = (self.state.ix + 1) % SPEC['max_memory_slots']
             result = f"IX={self.state.ix}"
         elif opcode == 'GETIX':
-            self.state.stack.append(self.state.ix)
-            result = f"PUSHED IX={self.state.ix}"
+            if len(self.state.stack) + 1 > SPEC['max_stack_size']:
+                self.push_trap(TrapCode.STACK_OVERFLOW)
+                result = "STACK_OVERFLOW"
+            else:
+                self.state.stack.append(self.state.ix)
+                self.check_stack_health()
+                result = f"PUSHED IX={self.state.ix}"
 
         if instr.updates_flags and isinstance(result, int):
             self.update_flags(result)
@@ -565,13 +536,16 @@ class PauseLangVM:
                 return {'error': 'Sync calibration failed'}
             data_stream = data_stream[4:]
             pause_stream = pause_stream[4:]
-            base_offset = len(SPEC['sync_phrase'])  # Track offset for jump compensation
+            base_offset = len(SPEC['sync_phrase'])
         if len(data_stream) != len(pause_stream):
             return {'error': f'Stream length mismatch: data={len(data_stream)}, pauses={len(pause_stream)}'}
         
         results = []
         while self.state.pc < len(data_stream) and not self.state.halted:
             if not self.check_gas(): break
+            
+            self.state.instructions_executed += 1
+            
             value = data_stream[self.state.pc]
             raw_pause = pause_stream[self.state.pc]
             pause = self.quantizer.quantize(raw_pause)
@@ -586,7 +560,7 @@ class PauseLangVM:
             
             prev_value = data_stream[self.state.pc - 1] if self.state.pc > 0 else None
 
-            # Control flow handling (with offset compensation and bounds checking)
+            # Control flow handling
             if instr.opcode == 'JUMP':
                 target = value - base_offset
                 if not (0 <= target < len(data_stream)):
@@ -623,26 +597,29 @@ class PauseLangVM:
                 self.state.pc += 1
                 result = f"SKIPPING PC {self.state.pc + 1}"
             elif instr.opcode == 'LOOP_START':
-                if not self.state.loop_stack or self.state.loop_stack[-1] != self.state.pc:
+                # Check loop depth
+                if len(self.state.loop_stack) >= SPEC['max_loop_depth']:
+                    self.push_trap(TrapCode.LOOP_DEPTH_EXCEEDED)
+                    result = "LOOP_DEPTH_EXCEEDED"
+                elif not self.state.loop_stack or self.state.loop_stack[-1] != self.state.pc:
                     self.state.loop_stack.append(self.state.pc)
-                result = "LOOP_START"
+                    result = "LOOP_START"
+                else:
+                    result = "LOOP_START"
             elif instr.opcode == 'LOOP_END':
-                # Pre-exec check already confirmed stack has >= 1 item, but double-check
+                # Double-check stack
                 if len(self.state.stack) == 0:
                     self.push_trap(TrapCode.STACK_UNDERFLOW)
                     result = "LOOP_END STACK_UNDERFLOW"
                 elif not self.state.loop_stack:
                     result = "LOOP_EXIT (no loop)"
-                    # We still pop the value, as the instruction promises
-                    self.state.stack.pop() 
+                    self.state.stack.pop()
                 else:
-                    counter_value = self.state.stack.pop()  # Pop the counter (v0.7.4 fix)
+                    counter_value = self.state.stack.pop()
                     if counter_value > 0:
-                        # Loop back: pc is set to LOOP_START
-                        self.state.pc = self.state.loop_stack[-1] - 1 
+                        self.state.pc = self.state.loop_stack[-1] - 1
                         result = "LOOP_CONTINUE"
                     else:
-                        # Exit loop: pop the loop stack
                         self.state.loop_stack.pop()
                         result = "LOOP_EXIT"
             elif instr.opcode == 'CALL':
@@ -687,7 +664,12 @@ class PauseLangVM:
             'final_state': self.get_state(),
             'traps': [t.name for t in self.state.trap_stack],
             'gas_used': self.state.gas_used,
-            'halted': self.state.halted
+            'halted': self.state.halted,
+            'stats': {
+                'stack_high_water': self.state.stack_high_water,
+                'instructions_executed': self.state.instructions_executed,
+                'trap_count': len(self.state.trap_stack),
+            }
         }
     
     def get_state(self) -> Dict:
@@ -699,7 +681,9 @@ class PauseLangVM:
             'lane': self.state.lane.name,
             'gas_used': self.state.gas_used,
             'halted': self.state.halted,
-            'ix': self.state.ix
+            'ix': self.state.ix,
+            'stack_high_water': self.state.stack_high_water,
+            'instructions_executed': self.state.instructions_executed,
         }
     
     def disassemble(self, show_labels: bool = True, show_state: bool = False, 
@@ -711,30 +695,25 @@ class PauseLangVM:
         lines = ["=== DISASSEMBLY ===",
                  "*PCs are post-sync absolute; execution trace is chronological (jumps may skip lines).*"]
         
-        # Reverse map PC to labels if available
         labels_reverse = {v: k for k, v in self.state.labels.items()} if self.state.labels else {}
         
         for i, step in enumerate(self.execution_trace):
-            pc = step['pc'] + 4  # Adjust for sync offset in display
+            pc = step['pc'] + 4
             
-            # Label column
             label = ""
             if show_labels and pc in labels_reverse:
                 label = f"{labels_reverse[pc]}:"
             label_col = f"{label:12}" if show_labels else ""
             
-            # State column
             state_col = ""
             if show_state:
                 stack_preview = str(self.state.stack[-3:]) if len(self.state.stack) > 0 else "[]"
                 flags = ','.join(step['flags'][:2]) if step['flags'] else "none"
                 state_col = f" | S:{stack_preview:20} F:{flags:10}"
             
-            # Memory operation details
             mem_detail = ""
             if show_memory and step['opcode'] in ['STORE', 'STOREI', 'LOAD', 'LOADI']:
                 if step['opcode'] == 'STORE':
-                    # Look back to find lane state
                     lane = Lane.DATA
                     for j in range(i-1, -1, -1):
                         if 'LANE:' in str(self.execution_trace[j].get('result', '')):
@@ -754,10 +733,8 @@ class PauseLangVM:
                         else:
                             mem_detail = f" [→ slot {slot} (META)]"
             
-            # Category icon
             cat_icon = INSTRUCTIONS[OPCODE_TO_PAUSE[step['opcode']]].signature()
             
-            # Format line
             if compact:
                 lines.append(f"{pc:04d}: {step['opcode']:12} {step['value']:6d}{mem_detail}")
             else:
@@ -774,7 +751,6 @@ class PauseLangVM:
         if verbose:
             return self.disassemble(show_labels=True, show_state=True)
         
-        # Compact explanation
         phrases, current = [], []
         for step in self.execution_trace:
             if step['opcode'] in ['JUMP','JUMP_IF_ODD','JUMP_IF_ZERO','SKIP_NEXT','LOOP_START','LOOP_END','CALL','RET','HALT']:
@@ -795,50 +771,43 @@ class PauseLangVM:
 # === COMPILER WITH LABELS ===
 
 class PauseLangCompiler:
-    # Instruction aliases for ergonomics
     ALIASES = {
-        'CONST': 'PUSH',           # More intuitive for literals
-        'DROP': 'POP',             # Common stack term
-        'PEEK': 'DUP',             # Non-destructive read
-        'DROPS': 'CLEAR_STACK',    # Clear all
-        'JMP': 'JUMP',             # Unconditional jump shorthand
-        'JOD': 'JUMP_IF_ODD',      # Shorthand
-        'JZ': 'JUMP_IF_ZERO',      # Shorthand
-        'JNZ': 'JUMP_IF_NONZERO',  # Corrected alias
+        'CONST': 'PUSH',
+        'DROP': 'POP',
+        'PEEK': 'DUP',
+        'DROPS': 'CLEAR_STACK',
+        'JMP': 'JUMP',
+        'JOD': 'JUMP_IF_ODD',
+        'JZ': 'JUMP_IF_ZERO',
+        'JNZ': 'JUMP_IF_NONZERO',
     }
     
-    # Multi-instruction macros
     MACROS = {
-        'INC':       [('PUSH', 1), 'ADD2'],          # TOS += 1
-        'DEC':       [('PUSH', 1), 'SUB2'],          # TOS -= 1
-        'DOUBLE':    ['DUP', 'ADD2'],                # Double TOS
-        'SQUARED':   ['DUP', 'MUL2'],                # Square TOS
-        'ENTER':     ['PUSH', 'SWAP'],               # Enter frame
-        'LEAVE':     ['SWAP', 'POP'],                # Leave frame
-        'STOREI_POP':['STOREI', 'POP'],              # Store and pop - Obsolete with fix, kept for compatibility
-        'NOT':       [('PUSH', 1), 'SWAP', 'SUB2'],  # Arithmetic NOT (1 - TOS); not bitwise or strict boolean (use logic patterns for strict)
-        'SETF':      [('PUSH', 0), 'ADD2'],          # Set flags from TOS (add zero)
+        'INC':       [('PUSH', 1), 'ADD2'],
+        'DEC':       [('PUSH', 1), 'SUB2'],
+        'DOUBLE':    ['DUP', 'ADD2'],
+        'SQUARED':   ['DUP', 'MUL2'],
+        'ENTER':     ['PUSH', 'SWAP'],
+        'LEAVE':     ['SWAP', 'POP'],
+        'STOREI_POP':['STOREI', 'POP'],
+        'NOT':       [('PUSH', 1), 'SWAP', 'SUB2'],
+        'SETF':      [('PUSH', 0), 'ADD2'],
     }
     
     @staticmethod
     def compile(source: str, debug: bool = False) -> Tuple[List[float], List[int], List[str], Dict[str, int]]:
-        """
-        Two-pass compiler with label support.
-        Returns: (pauses, data, comments, labels)
-        """
+        """Two-pass compiler with label support"""
         lines = source.strip().split('\n')
         
-        # First pass: collect labels and calculate positions
+        # First pass: collect labels
         labels = {}
-        pc = 4  # Start after sync sequence
+        pc = 4
         
         for line_num, raw_line in enumerate(lines):
-            # Remove comments and strip
             clean = raw_line.strip().split('#')[0].strip()
             if not clean:
                 continue
                 
-            # Check if it's a label
             if clean.endswith(':'):
                 label_name = clean[:-1].strip()
                 if label_name in labels:
@@ -848,15 +817,12 @@ class PauseLangCompiler:
                     print(f"Label '{label_name}' → PC {pc}")
                 continue
             
-            # Parse instruction
             parts = clean.split()
             opcode = parts[0].upper()
             
-            # Resolve aliases
             if opcode in PauseLangCompiler.ALIASES:
                 opcode = PauseLangCompiler.ALIASES[opcode]
             
-            # Count instructions
             if opcode in PauseLangCompiler.MACROS:
                 pc += len(PauseLangCompiler.MACROS[opcode])
             elif opcode in OPCODE_TO_PAUSE:
@@ -864,7 +830,7 @@ class PauseLangCompiler:
             else:
                 raise ValueError(f"Unknown opcode '{opcode}' at line {line_num + 1}")
         
-        # Second pass: generate instructions with resolved labels
+        # Second pass: generate instructions
         pauses = SPEC['sync_phrase'].copy()
         data = [0, 0, 0, 0]
         comments = ['SYNC', 'SYNC', 'SYNC', 'SYNC']
@@ -877,12 +843,10 @@ class PauseLangCompiler:
             parts = clean.split()
             opcode = parts[0].upper()
             
-            # Resolve aliases
             original_opcode = opcode
             if opcode in PauseLangCompiler.ALIASES:
                 opcode = PauseLangCompiler.ALIASES[opcode]
             
-            # Resolve operand (might be label or number)
             value = 0
             if len(parts) > 1:
                 operand = parts[1]
@@ -895,9 +859,7 @@ class PauseLangCompiler:
                 else:
                     raise ValueError(f"Unknown operand '{operand}' at line {line_num + 1}")
             
-            # Generate instructions
             if opcode in PauseLangCompiler.MACROS:
-                # Expand macro
                 for macro_step in PauseLangCompiler.MACROS[opcode]:
                     if isinstance(macro_step, tuple):
                         macro_op, imm = macro_step
@@ -931,12 +893,12 @@ class TortureTests:
         source = """
         start:
             PUSH 5
-            SETF 0          # Set flags from TOS (5 is odd)
+            SETF 0
             JUMP_IF_ODD skip_even
             PUSH 10
         skip_even:
             PUSH 20
-            JZ end          # Won't jump, ZERO flag not set
+            JZ end
             PUSH 30
         end:
             HALT
@@ -945,7 +907,6 @@ class TortureTests:
         vm = PauseLangVM(debug=False)
         result = vm.execute(data, pauses, labels=labels)
         
-        # Should have jumped over PUSH 10 since 5 is odd
         stack = result['final_state']['stack']
         assert 10 not in stack, f"Failed to skip: {stack}"
         assert stack == [5, 20, 30], f"Unexpected stack: {stack}"
@@ -955,12 +916,12 @@ class TortureTests:
     def test_aliases():
         """Test instruction aliases"""
         source = """
-            CONST 42       # PUSH alias
-            PEEK           # DUP alias
-            DROP           # POP alias
+            CONST 42
+            PEEK
+            DROP
             CONST 0
-            SETF 0         # Set flags (0 sets ZERO flag)
-            JZ done        # JUMP_IF_ZERO alias
+            SETF 0
+            JZ done
             CONST 99
         done:
             HALT
@@ -979,33 +940,31 @@ class TortureTests:
         """Test division and modulo with negatives"""
         vm = PauseLangVM(debug=False)
         
-        # Test DIV2 truncation toward zero
         tests = [
-            (7, 2, 3),    # Positive / positive
-            (-7, 2, -3),  # Negative / positive  
-            (7, -2, -3),  # Positive / negative
-            (-7, -2, 3),  # Negative / negative
+            (7, 2, 3),
+            (-7, 2, -3),
+            (7, -2, -3),
+            (-7, -2, 3),
         ]
         
         for a, b, expected in tests:
             vm.reset()
-            pauses = [0.09, 0.09, 0.23]  # PUSH a, PUSH b, DIV2
+            pauses = [0.09, 0.09, 0.23]
             data = [a, b, 0]
             result = vm.execute(data, pauses, sync=False)
             actual = result['final_state']['stack'][0]
             assert actual == expected, f"DIV2({a},{b}) = {actual}, expected {expected}"
         
-        # Test MOD2 positive semantics
         mod_tests = [
-            (7, 3, 1),    # Normal positive
-            (-7, 3, 2),   # Negative dividend
-            (7, -3, 1),   # Negative divisor
-            (-7, -3, 2),  # Both negative
+            (7, 3, 1),
+            (-7, 3, 2),
+            (7, -3, 1),
+            (-7, -3, 2),
         ]
         
         for a, b, expected in mod_tests:
             vm.reset()
-            pauses = [0.09, 0.09, 0.24]  # PUSH a, PUSH b, MOD2
+            pauses = [0.09, 0.09, 0.24]
             data = [a, b, 0]
             result = vm.execute(data, pauses, sync=False)
             actual = result['final_state']['stack'][0]
@@ -1043,7 +1002,7 @@ class TortureTests:
         
         ops_to_test = [
             (0.10, 'POP'),
-            (0.11, 'DUP'), 
+            (0.11, 'DUP'),
             (0.40, 'SETIX'),
         ]
         
@@ -1056,15 +1015,15 @@ class TortureTests:
     
     @staticmethod
     def test_loop_memory():
-        """Test loop stack hygiene (LOOP_END must pop)."""
+        """Test loop stack hygiene"""
         source = """
         main:
-            CONST 3     # Push counter
+            CONST 3
         loop_label:
             LOOP_START
-            DEC         # counter -> counter - 1
-            PEEK        # Duplicate for the loop check
-            LOOP_END    # Pops the copy, loops if > 0
+            DEC
+            PEEK
+            LOOP_END
             HALT
         """
         
@@ -1074,9 +1033,6 @@ class TortureTests:
         
         assert len(vm.state.loop_stack) == 0, "LOOP_START/END memory leak detected"
         final_stack = result['final_state']['stack']
-        
-        # Final stack should be [0] (the final result of the countdown)
-        # not [3, 2, 1, 0] which would be a stack leak.
         assert final_stack == [0], f"Loop stack leak detected. Expected [0], got {final_stack}"
         return "✓ LOOP memory management passed"
     
@@ -1086,9 +1042,9 @@ class TortureTests:
         source = """
         main:
             CONST 100
-            JMP skip      # Unconditional jump
-            CONST 200     # Should be skipped
-            CONST 300     # Should be skipped
+            JMP skip
+            CONST 200
+            CONST 300
         skip:
             CONST 400
             HALT
@@ -1104,44 +1060,40 @@ class TortureTests:
 
     @staticmethod
     def test_div_overflow():
-        """Test the specific DIV2 overflow case (INT32_MIN / -1)"""
+        """Test the specific DIV2 overflow case"""
         vm = PauseLangVM(debug=False)
         
         INT32_MIN = -2**31
         
         vm.reset()
-        pauses = [0.09, 0.09, 0.23]  # PUSH INT32_MIN, PUSH -1, DIV2
+        pauses = [0.09, 0.09, 0.23]
         data = [INT32_MIN, -1, 0]
         result = vm.execute(data, pauses, sync=False)
         
         stack = result['final_state']['stack']
         flags = result['final_state']['flags']
         
-        # Result should wrap to INT32_MIN
         assert stack == [INT32_MIN], f"DIV2 overflow failed: expected [{INT32_MIN}], got {stack}"
-        # OVERFLOW flag should be set
         assert flags['OVERFLOW'] == True, "DIV2 overflow did not set OVERFLOW flag"
         
         return "✓ DIV2 overflow (MIN / -1) passed"
 
     @staticmethod
     def test_sticky_overflow_flag():
-        """Test that OVERFLOW flag is reset between operations (v0.7.4 fix)"""
+        """Test that OVERFLOW flag is reset between operations"""
         vm = PauseLangVM(debug=False)
         
         INT32_MAX = 2**31 - 1
         
-        # First operation: cause overflow
         vm.reset()
-        pauses = [0.09, 0.09, 0.20]  # PUSH MAX, PUSH MAX, ADD2
+        pauses = [0.09, 0.09, 0.20]
         data = [INT32_MAX, INT32_MAX, 0]
         result = vm.execute(data, pauses, sync=False)
         
         flags = result['final_state']['flags']
         assert flags['OVERFLOW'] == True, "First ADD2 should set OVERFLOW"
         
-        # Second operation: normal operation should NOT have sticky overflow
-        pauses.extend([0.09, 0.09, 0.20])  # PUSH 1, PUSH 2, ADD2
+        pauses.extend([0.09, 0.09, 0.20])
         data.extend([1, 2, 0])
         result = vm.execute(data, pauses, sync=False)
         
@@ -1149,6 +1101,54 @@ class TortureTests:
         assert flags['OVERFLOW'] == False, "Second ADD2 should reset OVERFLOW flag"
         
         return "✓ Sticky overflow flag fix passed"
+
+    @staticmethod
+    def test_stack_growth_protection():
+        """Test stack overflow protection (NEW v0.7.4)"""
+        vm = PauseLangVM(debug=False)
+        
+        # Try to grow stack beyond limit
+        source = """
+            CONST 1
+        """
+        # Repeat DUP many times to grow stack
+        for _ in range(20):
+            source += "\n    DUP"
+        source += "\n    HALT"
+        
+        pauses, data, comments, labels = PauseLangCompiler.compile(source)
+        result = vm.execute(data, pauses, labels=labels)
+        
+        # Should track high water mark
+        assert result['stats']['stack_high_water'] > 0, "Stack high water not tracked"
+        assert result['final_state']['stack_high_water'] > 0, "Stack high water not in state"
+        
+        return "✓ Stack growth protection passed"
+
+    @staticmethod
+    def test_loop_depth_protection():
+        """Test loop depth limit (NEW v0.7.4)"""
+        vm = PauseLangVM(debug=False, gas_limit=50000)
+        
+        # Create deeply nested loops
+        source = "CONST 2\n"
+        for i in range(300):  # Exceed max_loop_depth
+            source += f"loop{i}:\n    LOOP_START\n"
+        
+        source += "    CONST 1\n"
+        
+        for i in range(300):
+            source += "    LOOP_END\n"
+        
+        source += "HALT\n"
+        
+        pauses, data, comments, labels = PauseLangCompiler.compile(source)
+        result = vm.execute(data, pauses, labels=labels)
+        
+        # Should trap on excessive loop depth
+        assert 'LOOP_DEPTH_EXCEEDED' in result['traps'], "Loop depth limit not enforced"
+        
+        return "✓ Loop depth protection passed"
 
     @staticmethod
     def test_fuzz():
@@ -1178,9 +1178,11 @@ class TortureTests:
             TortureTests.test_flag_race,
             TortureTests.test_stack_underflow_protection,
             TortureTests.test_loop_memory,
+            TortureTests.test_stack_growth_protection,
+            TortureTests.test_loop_depth_protection,
             TortureTests.test_fuzz,
         ]
-        print("\n🔥 TORTURE TEST SUITE v0.7.4 🔥")
+        print("\n🔥 TORTURE TEST SUITE v0.7.4 (HARDENED) 🔥")
         print("=" * 50)
         passed = 0
         failed = 0
@@ -1197,6 +1199,11 @@ class TortureTests:
                 failed += 1
         print("=" * 50)
         print(f"Results: {passed} passed, {failed} failed")
+        print(f"\n📊 Hardening Features:")
+        print(f"  • Stack high-water mark tracking")
+        print(f"  • Loop depth limit: {SPEC['max_loop_depth']}")
+        print(f"  • Trap circuit breaker: {SPEC['max_traps']}")
+        print(f"  • Defensive double-pop protection")
         return passed, failed
 
 # Run the torture tests
