@@ -1,4 +1,3 @@
-# Paste the entire PauseLang code here
 """
 PauseLang v0.7.2 - Bugfix
 ======================================
