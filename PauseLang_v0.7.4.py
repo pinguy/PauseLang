@@ -34,7 +34,7 @@ from math import exp
 # === FORMAL SPECIFICATION ===
 
 SPEC = {
-    'version': '0.7.5',
+    'version': '0.7.4',
     'word_size': 32,
     'overflow': 'wrap',
     'division': 'truncate',  # Truncate toward zero
