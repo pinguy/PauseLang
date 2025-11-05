@@ -94,5 +94,5 @@ Clone the repo:
 ```bash
 git clone https://github.com/pinguy/PauseLang
 cd PauseLang
-python3 PauseLang_v0.6.4.py
+python3 PauseLang_v0.7.3.py
 
