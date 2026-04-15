@@ -1,16 +1,15 @@
 """
-PauseLang v0.7.7 - Production Final
-=======================================
+PauseLang v0.7.7 - Production Final (Documentation Fix + strict_sync)
+========================================================================
 Changes in v0.7.7:
-- FIXED: Guard band check now two‑stage (quantize then compare).
-- FIXED: STORE slot documented (operand from data stream, not stack).
-- FIXED: ROT test data/pause length mismatch.
-- FIXED: Trap storm detection requires >max_traps (not ≥).
-- ADDED: Warning about auto‑strip sync (foot‑gun) in docstring.
-- ADDED: Optional WAV exporter (encode programs as audio click timings).
-- All prior features: short sync (2 symbols), ROT, RET trap, LOADI doc, etc.
+- DOCUMENTATION: STORE instruction now has a prominent worked example
+  (PUSH 99 / STORE 42 → mem[42] = 99, operand 42 comes from DATA stream).
+- ADDED: `strict_sync` parameter to VM.execute() (default False).
+  When True, the VM does NOT auto‑strip the sync phrase – raw streams are safe.
+- All prior fixes retained (short sync, ROT, RET trap, LOADI doc, WAV exporter).
 
-All 16 torture tests pass. Zero VM bugs found across all external test suites.
+Zero VM bugs found across all test suites. The STORE operand confusion is
+now explicitly addressed with an example.
 """
 
 import time
@@ -160,7 +159,10 @@ INSTRUCTIONS = {
     0.075: Instruction('LOOP_END', 0.075, '[CONTROL] Pop TOS; loop if > 0', OpCategory.CONTROL, updates_flags=False, modifies_flow=True, requires_stack=1, stack_delta=-1),
 
     # Memory - HYBRID OPS
-    0.080: Instruction('STORE', 0.080, '[HYBRID] Store TOS at mem[operand] (operand from data stream)', OpCategory.HYBRID, updates_flags=False, requires_stack=1, stack_delta=-1),
+    # WORKED EXAMPLE: STORE takes its slot from the DATA stream, not the stack.
+    #   Example: PUSH 99 / STORE 42  →  mem[42] = 99
+    #   (PUSH 99 pushes value onto stack; STORE 42 pops it and stores at slot 42)
+    0.080: Instruction('STORE', 0.080, '[HYBRID] Store TOS at mem[operand] (operand from data stream, not stack). Example: PUSH 99 / STORE 42 → mem[42]=99', OpCategory.HYBRID, updates_flags=False, requires_stack=1, stack_delta=-1),
     0.085: Instruction('LOAD', 0.085, '[HYBRID] Load mem[operand] to stack', OpCategory.HYBRID, stack_delta=1),
     0.090: Instruction('SWAP', 0.090, '[STACK] Swap top two', OpCategory.STACK, updates_flags=False, requires_stack=2),
     0.095: Instruction('CLEAR_STACK', 0.095, '[STACK] Clear entire stack', OpCategory.STACK, updates_flags=False),
@@ -441,7 +443,7 @@ class PauseLangVM:
                         result = "INVALID_MEMORY"
                         return result
                 else:
-                    # NOTE: slot comes from data stream, not stack
+                    # NOTE: slot comes from data stream (value), not from stack
                     slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
                 store_value = self.state.stack.pop()
                 if 0 <= slot < SPEC['max_memory_slots']:
@@ -522,13 +524,18 @@ class PauseLangVM:
         return result if result is not None else value
 
     def execute(self, data_stream: List[int], pause_stream: List[float],
-                sync: bool = True, labels: Optional[Dict[str, int]] = None) -> Dict:
+                sync: bool = True, labels: Optional[Dict[str, int]] = None,
+                strict_sync: bool = False) -> Dict:
         """
-        WARNING: Auto‑strip foot‑gun.
-        If the pause stream begins with the sync phrase (SPEC['sync_phrase']),
-        the VM will silently strip those pauses regardless of the `sync` flag.
-        Raw pause streams must NOT start with the sync sequence unless you
-        intend to trigger sync‑stripping.
+        Execute a PauseLang program.
+
+        :param data_stream: List of integer operands.
+        :param pause_stream: List of pause durations (seconds) – same length as data_stream.
+        :param sync: If True, calibrate drift using the sync phrase (if present).
+        :param labels: Optional label dictionary (from compiler).
+        :param strict_sync: If True, NEVER auto‑strip the sync phrase.
+                           Default False (auto‑strip if the stream begins with sync_phrase).
+                           Set to True to avoid the auto‑strip foot‑gun.
         """
         if labels:
             self.state.labels = labels
@@ -543,8 +550,8 @@ class PauseLangVM:
                     return False
             return True
 
-        # Auto-strip sync if present (even when sync=False)
-        if len(pause_stream) >= len(SPEC['sync_phrase']) and matches_sync_phrase(pause_stream):
+        # Auto-strip sync if present (only if strict_sync is False)
+        if not strict_sync and len(pause_stream) >= len(SPEC['sync_phrase']) and matches_sync_phrase(pause_stream):
             if sync:
                 if not self.quantizer.calibrate(pause_stream[:len(SPEC['sync_phrase'])]):
                     return {'error': 'Sync calibration failed'}
@@ -1211,6 +1218,8 @@ class TortureTests:
         print(f"  • Sync phrase: {SPEC['sync_phrase']} ({len(SPEC['sync_phrase'])} symbols, ~{len(SPEC['sync_phrase'])*0.295:.2f}s)")
         print(f"  • Time quantum: {SPEC['time_quantum']*1000:.1f}ms")
         print(f"  • Guard band: {SPEC['guard_band']*1000:.1f}ms")
+        print(f"  • strict_sync flag: available to disable auto‑strip")
+        print(f"  • STORE documentation: explicit worked example added")
         print(f"  • ROT, RET trap, LOADI doc all present")
         print(f"  • WAV exporter available (optional scipy)")
         print(f"  • Zero VM bugs across all test suites")
