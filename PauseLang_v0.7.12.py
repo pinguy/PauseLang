@@ -2,18 +2,17 @@
 PauseLang v0.7.12 - Production Final (with IoT Demos)
 =======================================================
 Changes in v0.7.12:
-- DOCUMENTATION: STORE instruction now has a prominent worked example
-  (PUSH 99 / STORE 42 → mem[42] = 99, operand 42 comes from DATA stream).
+- BUGFIX: GAS_EXHAUSTED now correctly sets state.halted = True.
+- BUGFIX: Large jitter no longer silently executes the wrong opcode.
+          Instruction decoding now compares raw pause directly to
+          the expected pause (within guard band), not the quantized value.
+          This prevents the "nearest neighbour" snapping behaviour.
+- DOCUMENTATION: STORE instruction worked example remains.
 - ADDED: `strict_sync` parameter to VM.execute() (default False).
-  When True, the VM does NOT auto‑strip the sync phrase – raw streams are safe.
-- ADDED: Enhanced torture test suite (23 tests, all passing).
-- ADDED: IoTDemos class with three side‑channel examples:
-    * Leaky bucket rate limiter (works)
-    * Temporal spike/dragon detector (works, counts 2 spikes)
-    * Key delivery via timing gaps (works)
-- All prior fixes retained (short sync, ROT, RET trap, LOADI doc, WAV exporter).
+- Enhanced torture test suite (25 tests, all passing).
+- IoTDemos class with three side‑channel examples.
 
-Zero VM bugs across all test suites. Ready for low‑power IoT side‑channel experiments.
+All prior fixes retained (short sync, ROT, RET trap, LOADI doc, WAV exporter).
 """
 
 import time
@@ -164,7 +163,6 @@ INSTRUCTIONS = {
     # Memory - HYBRID OPS
     # WORKED EXAMPLE: STORE takes its slot from the DATA stream, not the stack.
     #   Example: PUSH 99 / STORE 42  →  mem[42] = 99
-    #   (PUSH 99 pushes value onto stack; STORE 42 pops it and stores at slot 42)
     0.080: Instruction('STORE', 0.080, '[HYBRID] Store TOS at mem[operand] (operand from data stream, not stack). Example: PUSH 99 / STORE 42 → mem[42]=99', OpCategory.HYBRID, updates_flags=False, requires_stack=1, stack_delta=-1),
     0.085: Instruction('LOAD', 0.085, '[HYBRID] Load mem[operand] to stack', OpCategory.HYBRID, stack_delta=1),
     0.090: Instruction('SWAP', 0.090, '[STACK] Swap top two', OpCategory.STACK, updates_flags=False, requires_stack=2),
@@ -273,6 +271,7 @@ class PauseLangVM:
         self.state.gas_used += 1
         if self.state.gas_used > self.gas_limit:
             self.push_trap(TrapCode.GAS_EXHAUSTED)
+            self.state.halted = True   # <-- FIXED v0.7.12: explicitly halt on gas exhaustion
             return False
         return True
 
@@ -571,10 +570,10 @@ class PauseLangVM:
 
             value = data_stream[self.state.pc]
             raw_pause = pause_stream[self.state.pc]
-            pause = self.quantizer.quantize(raw_pause)
+            # FIXED v0.7.12: decode using raw pause, not quantized value
             instr = None
             for target_pause, instruction in INSTRUCTIONS.items():
-                if self.quantizer.in_guard_band(pause, target_pause):
+                if abs(raw_pause - target_pause) <= self.quantizer.guard_band:
                     instr = instruction
                     break
             if instr is None:
@@ -1275,6 +1274,31 @@ class TortureTests:
         return "✓ Fuzz test passed (v0.7.12 ISA)"
 
     @staticmethod
+    def test_gas_exhaustion_halted():
+        """GAS_EXHAUSTED should set halted=True."""
+        vm = PauseLangVM(gas_limit=2, debug=False)
+        pauses = [0.045, 0.045, 0.045]  # three PUSHes, gas limit 2
+        data   = [1, 2, 3]
+        result = vm.execute(data, pauses, sync=False)
+        assert result['halted'] is True, "GAS_EXHAUSTED did not set halted"
+        assert 'GAS_EXHAUSTED' in result['traps']
+        return "✓ GAS_EXHAUSTED sets halted flag"
+
+    @staticmethod
+    def test_jitter_no_snap():
+        """Large jitter should produce INVALID_INSTRUCTION, not a silent wrong opcode."""
+        vm = PauseLangVM(debug=False)
+        # Expect PUSH (0.045) but add +3ms jitter -> 0.048, beyond guard band
+        pauses = [0.048, 0.150]  # 0.048 outside 0.045±0.0015
+        data   = [42,     0]
+        result = vm.execute(data, pauses, sync=False)
+        assert 'INVALID_INSTRUCTION' in result['traps'], "Large jitter should trap, not snap to MEAN"
+        # Verify it didn't execute MEAN instead
+        opcodes = [r[1] for r in result['results']]
+        assert opcodes[0] == 'PASS', "Fallback PASS should be used on invalid decode"
+        return "✓ Jitter no longer snaps to wrong opcode"
+
+    @staticmethod
     def run_all():
         tests = [
             TortureTests.test_labels,
@@ -1300,6 +1324,8 @@ class TortureTests:
             TortureTests.test_ix_wrapping,
             TortureTests.test_store_worked_example,
             TortureTests.test_fuzz_v077,
+            TortureTests.test_gas_exhaustion_halted,
+            TortureTests.test_jitter_no_snap,
         ]
         print("\n🔥 TORTURE TEST SUITE v0.7.12 (Production Final) 🔥")
         print("=" * 50)
@@ -1327,17 +1353,14 @@ class IoTDemos:
     def demo_leaky_bucket():
         print("\n📡 IoT Demo 1: Leaky Bucket Rate Limiter")
         print("─" * 50)
-        # A correct, simple leaky bucket using memory counters and JUMP loops
         source = """
         main:
-            # bucket = 0, capacity = 5
             CONST 0
             STORE 0
             CONST 5
             STORE 1
-            # Add tokens for 8 ticks
             CONST 8
-            STORE 2   # tick counter
+            STORE 2
         tick_loop:
             LOAD 2
             JZ tick_done
@@ -1356,9 +1379,8 @@ class IoTDemos:
             STORE 2
             JUMP tick_loop
         tick_done:
-            # Try to consume 7 tokens
             CONST 7
-            STORE 3   # consume counter
+            STORE 3
         consume_loop:
             LOAD 3
             JZ consume_done
@@ -1394,7 +1416,6 @@ class IoTDemos:
     def demo_spike_detector():
         print("\n📡 IoT Demo 2: Temporal Spike/Dragon Detector")
         print("─" * 50)
-        # Correct version: DUP + equality checks with JUMP_IF_ZERO, proper stack cleanup
         source = """
         main:
             CONST 120
@@ -1410,9 +1431,9 @@ class IoTDemos:
             CONST 250
             STORE 5
             CONST 0
-            STORE 10   # counter
+            STORE 10
             CONST 0
-            STORE 11   # index
+            STORE 11
         loop:
             LOAD 11
             CONST 6
