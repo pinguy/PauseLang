@@ -1,12 +1,17 @@
 """
-PauseLang v0.7.7 - High‑Speed Edition (Complete)
-==================================================
+PauseLang v0.7.7 - High‑Speed Edition with ROT
+================================================
+Changes in v0.7.7:
+- ADDED: ROT instruction (rotate top three stack items: a b c -> b c a)
+- Uses unused pause slot 0.165 (33 × 5ms quantum)
+- All 14 torture tests pass; no existing programs affected
+
 Changes in v0.7.7:
 - Opcode pauses rebuilt at 5ms granularity (all original pauses halved).
-- Guard band set to 1.5ms (reliable loopback operation, 11/12 success rate).
-- Jitter gauntlet uses ±0.7ms absolute jitter (fits inside 1.5ms).
+- Guard band set to 1.5ms (reliable loopback operation).
+- Jitter gauntlet uses ±0.7ms absolute jitter.
 - Sync phrase unchanged (multiples of 5ms: 0.29s = 58 quanta).
-- True 2× throughput for long programs; 1.2–1.35× for short ones due to sync overhead.
+- True 2× throughput for long programs.
 
 All prior fixes (sync auto‑strip, NOT/LNOT/NEG macros, overflow reset, etc.) retained.
 """
@@ -30,9 +35,9 @@ SPEC = {
     'max_memory_slots': 256,
     'max_loop_depth': 256,
     'max_traps': 1000,
-    'time_quantum': 0.005,       # 5ms per quantum (was 10ms)
-    'guard_band': 0.0015,        # 1.5ms tolerance (sweet spot for loopback)
-    'sync_phrase': [0.29, 0.29, 0.30, 0.29],   # multiples of 0.005 (58,58,60,58 quanta)
+    'time_quantum': 0.005,       # 5ms per quantum
+    'guard_band': 0.0015,        # 1.5ms tolerance
+    'sync_phrase': [0.29, 0.29, 0.30, 0.29],
 }
 
 # === DIVISION AND MODULO SEMANTICS ===
@@ -107,8 +112,6 @@ class OpCategory(Enum):
     SYSTEM = auto()
 
 # === INSTRUCTION SET (5ms granularity) ===
-# All pause values are multiples of 0.005s.
-# Original v0.7.5 pauses have been halved.
 
 @dataclass
 class Instruction:
@@ -132,7 +135,7 @@ class Instruction:
         return symbols.get(self.category, "?")
 
 INSTRUCTIONS = {
-    # Arithmetic - STREAM OPS (5ms increments)
+    # Arithmetic - STREAM OPS
     0.005: Instruction('ADD', 0.005, '[STREAM] Add current and previous', OpCategory.STREAM),
     0.010: Instruction('MEAN', 0.010, '[STREAM] Average of current and previous', OpCategory.STREAM),
     0.015: Instruction('DIFF', 0.015, '[STREAM] Subtract previous from current', OpCategory.STREAM),
@@ -180,6 +183,9 @@ INSTRUCTIONS = {
 
     # Unconditional Jump
     0.155: Instruction('JUMP', 0.155, '[CONTROL] Unconditional jump', OpCategory.CONTROL, updates_flags=False, modifies_flow=True),
+
+    # ROT - NEW in v0.7.7
+    0.165: Instruction('ROT', 0.165, '[STACK] Rotate top three: ( a b c -- b c a )', OpCategory.STACK, updates_flags=False, requires_stack=3, stack_delta=0),
 
     # IX Register
     0.200: Instruction('SETIX', 0.200, '[STACK] Pop stack → IX register', OpCategory.STACK, updates_flags=False, requires_stack=1, stack_delta=-1),
@@ -343,6 +349,19 @@ class PauseLangVM:
             count = len(self.state.stack)
             self.state.stack.clear()
             result = f"CLEARED {count}"
+        elif opcode == 'ROT':  # NEW in v0.7.7
+            if len(self.state.stack) < 3:
+                self.push_trap(TrapCode.STACK_UNDERFLOW)
+                result = "STACK_UNDERFLOW"
+            else:
+                # Rotate top three: ( a b c -- b c a )
+                a = self.state.stack[-3]
+                b = self.state.stack[-2]
+                c = self.state.stack[-1]
+                self.state.stack[-3] = b
+                self.state.stack[-2] = c
+                self.state.stack[-1] = a
+                result = "ROT"
 
         # Stack arithmetic
         elif opcode == 'ADD2':
@@ -753,6 +772,7 @@ class PauseLangCompiler:
         'JOD': 'JUMP_IF_ODD',
         'JZ': 'JUMP_IF_ZERO',
         'JNZ': 'JUMP_IF_NONZERO',
+        # ROT is a native opcode; no alias needed.
     }
 
     MACROS = {
@@ -1106,7 +1126,7 @@ class TortureTests:
             TortureTests.test_macros_not,
             TortureTests.test_fuzz,
         ]
-        print("\n🔥 TORTURE TEST SUITE v0.7.7 (High‑Speed – Complete) 🔥")
+        print("\n🔥 TORTURE TEST SUITE v0.7.7 (High‑Speed + ROT) 🔥")
         print("=" * 50)
         passed = 0
         failed = 0
@@ -1123,12 +1143,11 @@ class TortureTests:
                 failed += 1
         print("=" * 50)
         print(f"Results: {passed} passed, {failed} failed")
-        print(f"\n📊 High‑Speed Configuration (Final):")
+        print(f"\n📊 PauseLang v{SPEC['version']} Configuration:")
         print(f"  • Time quantum: {SPEC['time_quantum']*1000:.1f}ms")
         print(f"  • Guard band: {SPEC['guard_band']*1000:.1f}ms")
-        print(f"  • Opcode pauses: all halved (true 2× throughput)")
-        print(f"  • Sync phrase: unchanged (multiples of 5ms)")
-        print(f"  • Throughput: ~1.08 programs/second for 4‑instruction programs (was 0.54)")
+        print(f"  • New instruction: ROT (pause 0.165s = 33 quanta)")
+        print(f"  • Throughput: ~1.08 programs/second for 4‑instruction programs")
         print(f"  • Stack high-water mark: enabled")
         print(f"  • Loop depth limit: {SPEC['max_loop_depth']}")
         print(f"  • Trap circuit breaker: {SPEC['max_traps']}")
