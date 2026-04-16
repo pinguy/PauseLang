@@ -6,8 +6,8 @@ from PauseLang_v0_7_12 import PauseLangVM, SPEC
 HOST = "127.0.0.1"
 PORT = 65432
 
-# Wider guard band for TCP jitter
-SPEC['guard_band'] = 0.0035
+# Tolerance for TCP jitter
+SPEC['guard_band'] = 0.0040
 
 def recv_exact(conn, n):
     data = b''
@@ -19,7 +19,7 @@ def recv_exact(conn, n):
     return data
 
 def receive_and_execute():
-    vm = PauseLangVM(debug=False, gas_limit=100000)   # Set debug=False for cleaner output
+    vm = PauseLangVM(debug=False, gas_limit=100000)
 
     data_stream = []
     measured_pauses = []
@@ -65,7 +65,7 @@ def receive_and_execute():
 
     print(f"\nReceived {len(data_stream)} operands, {len(measured_pauses)} pauses.")
 
-    # Pad pauses if necessary
+    # Pad if needed
     while len(measured_pauses) < len(data_stream):
         measured_pauses.append(0.150)
 
@@ -84,30 +84,29 @@ def receive_and_execute():
     print(f"Memory: {result['final_state']['memory']}")
     print(f"IX: {result['final_state']['ix']}")
 
-    # === HUMAN-READABLE SECRET MESSAGE FROM MEMORY ===
-    print("\n=== SECRET MESSAGE DECODED ===")
-    mem = result['final_state']['memory']
+    # ==================== CLEAN HUMAN-READABLE OUTPUT ====================
+    print("\n" + "="*50)
+    print("SECRET MESSAGE RECEIVED VIA TIMING CHANNEL")
+    print("="*50)
+
+    stack = result['final_state']['stack']
     message = ""
-    for i in range(40):
-        byte = mem.get(i, 0)
-        if 32 <= byte <= 126:           # printable ASCII
+
+    # Extract printable characters from stack
+    for byte in stack:
+        if 32 <= byte <= 126:          # printable ASCII
             message += chr(byte)
-        elif byte == 0 and len(message) > 0:
+        elif byte == 1337:             # beacon / end marker
             break
 
     if message:
         print(f"Hidden message: {message}")
     else:
-        print("No readable message found in memory.")
+        print("No readable message found.")
 
-    # Also show stack as fallback (in case message is on stack)
-    if result['final_state']['stack']:
-        stack_bytes = [x for x in result['final_state']['stack'] if 32 <= x <= 126]
-        if stack_bytes:
-            stack_msg = ''.join(chr(x) for x in stack_bytes)
-            print(f"Stack as text: {stack_msg}")
-
-    print(f"Beacon: {result['final_state']['stack']}")
+    print(f"Beacon value : {stack[-1] if stack else 'None'}")
+    print(f"Total instructions executed: {result['gas_used']}")
+    print("="*50)
 
 if __name__ == "__main__":
     receive_and_execute()
