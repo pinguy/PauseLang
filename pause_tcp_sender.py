@@ -15,28 +15,72 @@ main:
     CONST 0
     SETIX                    # IX = 0
 
-    CONST 70   STOREI INCIX   # F
-    CONST 117  STOREI INCIX   # u
-    CONST 99   STOREI INCIX   # c
-    CONST 107  STOREI INCIX   # k
-    CONST 32   STOREI INCIX   # space
-    CONST 101  STOREI INCIX   # e
-    CONST 109  STOREI INCIX   # m
-    CONST 32   STOREI INCIX   # space
-    CONST 97   STOREI INCIX   # a
-    CONST 110  STOREI INCIX   # n
-    CONST 100  STOREI INCIX   # d
-    CONST 32   STOREI INCIX   # space
-    CONST 116  STOREI INCIX   # t
-    CONST 104  STOREI INCIX   # h
-    CONST 101  STOREI INCIX   # e
-    CONST 105  STOREI INCIX   # i
-    CONST 114  STOREI INCIX   # r
-    CONST 32   STOREI INCIX   # space
-    CONST 108  STOREI INCIX   # l
-    CONST 97   STOREI INCIX   # a
-    CONST 119  STOREI INCIX   # w
-    CONST 33   STOREI INCIX   # !
+    CONST 70                    # F
+    STOREI
+    INCIX
+    CONST 117                   # u
+    STOREI
+    INCIX
+    CONST 99                    # c
+    STOREI
+    INCIX
+    CONST 107                   # k
+    STOREI
+    INCIX
+    CONST 32                    # space
+    STOREI
+    INCIX
+    CONST 101                   # e
+    STOREI
+    INCIX
+    CONST 109                   # m
+    STOREI
+    INCIX
+    CONST 32                    # space
+    STOREI
+    INCIX
+    CONST 97                    # a
+    STOREI
+    INCIX
+    CONST 110                   # n
+    STOREI
+    INCIX
+    CONST 100                   # d
+    STOREI
+    INCIX
+    CONST 32                    # space
+    STOREI
+    INCIX
+    CONST 116                   # t
+    STOREI
+    INCIX
+    CONST 104                   # h
+    STOREI
+    INCIX
+    CONST 101                   # e
+    STOREI
+    INCIX
+    CONST 105                   # i
+    STOREI
+    INCIX
+    CONST 114                   # r
+    STOREI
+    INCIX
+    CONST 32                    # space
+    STOREI
+    INCIX
+    CONST 108                   # l
+    STOREI
+    INCIX
+    CONST 97                    # a
+    STOREI
+    INCIX
+    CONST 119                   # w
+    STOREI
+    INCIX
+    CONST 33                    # !
+    STOREI
+    INCIX
 
     CONST 1337
     HALT
