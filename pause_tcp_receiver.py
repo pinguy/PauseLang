@@ -90,14 +90,22 @@ def receive_and_execute():
     print("="*50)
 
     stack = result['final_state']['stack']
+    memory = result['final_state']['memory']
     message = ""
 
-    # Extract printable characters from stack
-    for byte in stack:
-        if 32 <= byte <= 126:          # printable ASCII
-            message += chr(byte)
-        elif byte == 1337:             # beacon / end marker
-            break
+    # Preferred format: contiguous printable ASCII bytes in memory starting at 0.
+    slot = 0
+    while slot in memory and 32 <= memory[slot] <= 126:
+        message += chr(memory[slot])
+        slot += 1
+
+    # Backward-compatible fallback for older senders that left bytes on the stack.
+    if not message:
+        for byte in stack:
+            if 32 <= byte <= 126:
+                message += chr(byte)
+            elif byte == 1337:         # beacon / end marker
+                break
 
     if message:
         print(f"Hidden message: {message}")
