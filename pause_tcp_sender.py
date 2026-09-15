@@ -1,8 +1,6 @@
 import socket
-import time
-import random
-import struct
 from PauseLang_v0_7_13 import PauseLangCompiler
+from pause_tcp_protocol import IO_TIMEOUT, TCP_TIME_SCALE, send_program
 
 HOST = "127.0.0.1"
 PORT = 65432
@@ -90,30 +88,13 @@ def send_with_timing(host, port, hidden_source: str):
     pauses, data, comments, labels = PauseLangCompiler.compile(hidden_source)
     print(f"Compiled {len(pauses)-2} instructions (+ sync phrase)")
 
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            s.connect((host, port))
-            print(f"Connected to {host}:{port}")
-
-            length = len(data)
-            s.sendall(struct.pack('<I', length))
-
-            for i, operand in enumerate(data):
-                payload = struct.pack('<H', operand & 0xFFFF)
-                s.sendall(payload)
-
-                if i < len(pauses):
-                    target = pauses[i]
-                    actual = target + random.uniform(-JITTER, JITTER)
-                    time.sleep(max(0.0, actual))
-                else:
-                    time.sleep(0.012 + random.uniform(-0.001, 0.001))
-
-            print("✅ Hidden PauseLang program sent successfully.")
-
-    except Exception as e:
-        print(f"❌ Sender error: {e}")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(IO_TIMEOUT)
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        s.connect((host, port))
+        print(f"Connected to {host}:{port}")
+        send_program(s, data, pauses, jitter=JITTER, time_scale=TCP_TIME_SCALE)
+        print("PauseLang timing stream sent successfully.")
 
 
 if __name__ == "__main__":

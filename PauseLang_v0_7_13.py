@@ -1,26 +1,9 @@
 """
-PauseLang v0.7.13
+PauseLang v0.7.14 (legacy module filename retained)
 =========================
-Changes in v0.7.13:
-- BUGFIX: INSTRUCTIONS dict keyed by integer milliseconds to eliminate
-          IEEE 754 float-key ambiguity. OPCODE_TO_PAUSE updated to match.
-          All decode/disassemble paths updated accordingly.
-- BUGFIX: in_guard_band() now compares raw pause directly (consistent with
-          the v0.7.12 decode-loop fix; quantize-first was the old broken path).
-- BUGFIX: LOOP_END with no matching LOOP_START now raises LOOP_MISMATCH trap
-          instead of silently consuming a stack value.
-- BUGFIX: JUMP_IF_NONZERO added to explain() control-op list (was silently
-          bucketed into phrase summaries).
-- CLEANUP: Dead `else 0` branches removed from ADD2/SUB2/MUL2/DIV2/MOD2
-           (unreachable since requires_stack=2 guard fires first).
-- CLEANUP: CARRY flag removed from Flag enum (was declared but never set
-           by any instruction; left a permanently-False flag in every state dump).
-- IMPROVEMENT: execution_trace now captures per-step stack snapshot so
-               disassemble(show_state=True) shows correct stack at each step.
-- IMPROVEMENT: NOT/LNOT/NEG macro semantics documented inline.
-
-All v0.7.12 fixes retained (gas halt, jitter no-snap, strict_sync, short sync,
-ROT, RET trap, LOADI uninit, WAV exporter, 25-test torture suite).
+A bounded stack VM with a temporally encoded instruction/control stream.
+See CHANGELOG.md for v0.7.14 fixes and benchmarks/RESULTS.md for measurements.
+The module filename is retained for compatibility with existing imports.
 """
 
 import time
@@ -30,11 +13,12 @@ from typing import List, Tuple, Any, Dict, Optional, Callable, Set
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from collections import deque
-from math import exp
+from math import exp, isfinite
+import re
 
 # === FORMAL SPECIFICATION ===
 SPEC = {
-    'version': '0.7.13',
+    'version': '0.7.14',
     'word_size': 32,
     'overflow': 'wrap',
     'division': 'truncate',
@@ -57,35 +41,82 @@ MOD2: Always positive remainder [0, |b|).
 # === TIME QUANTIZATION ===
 
 class TimeQuantizer:
-    def __init__(self, quantum: float = SPEC['time_quantum'], guard_band: float = SPEC['guard_band']):
-        self.quantum = quantum
-        self.guard_band = guard_band
-        self.drift_estimate = 0.0
+    """Decode only uniquely accepted symbols; calibration is per VM/session.
+
+    Offset correction is the default. Affine correction is opt-in because
+    noise on the 10 ms sync baseline is amplified when estimating clock skew.
+    Calibration bounds also keep the sync phrase distinct from ordinary ops.
+    """
+    def __init__(self, quantum: Optional[float] = None,
+                 guard_band: Optional[float] = None, calibration: str = 'offset'):
+        self.quantum = SPEC['time_quantum'] if quantum is None else quantum
+        self.guard_band = SPEC['guard_band'] if guard_band is None else guard_band
+        if not isfinite(self.quantum) or self.quantum <= 0:
+            raise ValueError('quantum must be finite and positive')
+        if not isfinite(self.guard_band) or self.guard_band < 0:
+            raise ValueError('guard_band must be finite and non-negative')
+        if calibration not in ('offset', 'affine'):
+            raise ValueError("calibration must be 'offset' or 'affine'")
+        self.calibration = calibration
         self.calibration_history = deque(maxlen=10)
+        self.reset()
+
+    def reset(self):
+        self.drift_estimate = 0.0  # legacy name: additive offset in seconds
+        self.scale_estimate = 1.0
+        self.calibration_history.clear()
+
+    def adjusted(self, pause: float) -> float:
+        return (pause - self.drift_estimate) / self.scale_estimate
 
     def quantize(self, pause: float) -> float:
-        adjusted = pause - self.drift_estimate
-        bin_index = round(adjusted / self.quantum)
-        return bin_index * self.quantum
+        return round(self.adjusted(pause) / self.quantum) * self.quantum
 
     def in_guard_band(self, pause: float, target: float) -> bool:
-        # Compare in integer microseconds. This preserves raw nearest-target
-        # behaviour while making the inclusive guard boundary deterministic.
-        adjusted_us = int(round((pause - self.drift_estimate) * 1_000_000))
+        if not isfinite(pause) or pause <= 0:
+            return False
+        adjusted_us = int(round(self.adjusted(pause) * 1_000_000))
         target_us = int(round(target * 1_000_000))
         guard_us = int(round(self.guard_band * 1_000_000))
         return abs(adjusted_us - target_us) <= guard_us
 
-    def calibrate(self, sync_pauses: List[float]) -> bool:
+    def decode(self, pause: float):
+        matches = [instr for instr in INSTRUCTIONS.values()
+                   if self.in_guard_band(pause, instr.pause)]
+        # Never resolve overlapping windows by instruction-table order.
+        return matches[0] if len(matches) == 1 else None
+
+    def calibration_parameters(self, sync_pauses: List[float]):
         expected = SPEC['sync_phrase']
-        if len(sync_pauses) != len(expected): return False
-        drifts = [observed - expected for observed, expected in zip(sync_pauses, expected)]
-        self.drift_estimate = sum(drifts) / len(drifts)
+        if (len(sync_pauses) != len(expected) or len(expected) < 2
+                or any(not isfinite(p) or p <= 0 for p in sync_pauses)):
+            return None
+        scale = 1.0
+        if self.calibration == 'affine':
+            baseline = expected[-1] - expected[0]
+            if baseline <= 0:
+                return None
+            scale = (sync_pauses[-1] - sync_pauses[0]) / baseline
+        offset = sum(p - scale * e for p, e in zip(sync_pauses, expected)) / len(expected)
+        if not (0.9 <= scale <= 1.1) or abs(offset) > 0.020:
+            return None
+        # Residual acceptance uses the same canonical-time guard as decode.
+        if any(abs((p - offset) / scale - e) > self.guard_band + 0.0000005
+               for p, e in zip(sync_pauses, expected)):
+            return None
+        return scale, offset
+
+    def calibrate(self, sync_pauses: List[float]) -> bool:
+        parameters = self.calibration_parameters(sync_pauses)
+        if parameters is None:
+            return False
+        self.scale_estimate, self.drift_estimate = parameters
         self.calibration_history.append(self.drift_estimate)
         return True
 
     def get_drift_trend(self) -> float:
-        if not self.calibration_history: return 0.0
+        if not self.calibration_history:
+            return 0.0
         return sum(self.calibration_history) / len(self.calibration_history)
 
 # === ENUMS ===
@@ -251,18 +282,26 @@ class VMState:
     instructions_executed: int = 0
 
 class PauseLangVM:
-    def __init__(self, gas_limit: int = 20000, trap_policy: str = 'continue', memory_mode: str = 'wrap', debug: bool = False):
+    def __init__(self, gas_limit: int = 20000, trap_policy: str = 'continue', memory_mode: str = 'wrap', debug: bool = False,
+                 guard_band: Optional[float] = None, calibration: str = 'offset'):
+        if trap_policy not in ('continue', 'halt', 'raise'):
+            raise ValueError('Invalid trap_policy')
+        if memory_mode not in ('wrap', 'strict'):
+            raise ValueError('Invalid memory_mode')
+        if not isinstance(gas_limit, int) or gas_limit < 0:
+            raise ValueError('gas_limit must be a non-negative integer')
         self.state = VMState()
         self.gas_limit = gas_limit
         self.trap_policy = trap_policy
         self.memory_mode = memory_mode
         self.debug = debug
-        self.quantizer = TimeQuantizer()
+        self.quantizer = TimeQuantizer(guard_band=guard_band, calibration=calibration)
         self.execution_trace = []
 
     def reset(self):
         self.state = VMState()
         self.execution_trace = []
+        self.quantizer.reset()
 
     def wrap_int32(self, value: int) -> int:
         INT32_MAX = 2**31 - 1
@@ -283,6 +322,7 @@ class PauseLangVM:
     def push_trap(self, code: TrapCode):
         self.state.trap_stack.append(code)
         if len(self.state.trap_stack) > SPEC['max_traps']:
+            self.state.trap_stack[-1] = TrapCode.TRAP_STORM
             self.state.halted = True
             if self.debug:
                 print(f"⚠️ TRAP STORM DETECTED: {len(self.state.trap_stack)} traps - FORCE HALT")
@@ -295,11 +335,11 @@ class PauseLangVM:
             print(f"⚠️ TRAP: {code.name}")
 
     def check_gas(self) -> bool:
-        self.state.gas_used += 1
-        if self.state.gas_used > self.gas_limit:
+        if self.state.gas_used >= self.gas_limit:
             self.push_trap(TrapCode.GAS_EXHAUSTED)
             self.state.halted = True   # <-- FIXED v0.7.12: explicitly halt on gas exhaustion
             return False
+        self.state.gas_used += 1
         return True
 
     def check_stack_health(self) -> bool:
@@ -437,7 +477,8 @@ class PauseLangVM:
                     self.state.stack.append(0)
                     result = "DIV_BY_ZERO"
                 else:
-                    r = self.wrap_int32(int(a / b))
+                    quotient = (abs(a) // abs(b)) * (-1 if (a < 0) != (b < 0) else 1)
+                    r = self.wrap_int32(quotient)
                     self.state.stack.append(r)
                     result = r
         elif opcode == 'MOD2':
@@ -472,13 +513,12 @@ class PauseLangVM:
                         return result
                 else:
                     slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
-                store_value = self.state.stack.pop()
-                if 0 <= slot < SPEC['max_memory_slots']:
-                    self.state.memory[slot] = store_value
-                    result = f"STORED {store_value} @ {slot}"
-                else:
+                if not (0 <= slot < SPEC['max_memory_slots']):
                     self.push_trap(TrapCode.INVALID_MEMORY)
-                    result = "INVALID_MEMORY"
+                    return 'INVALID_MEMORY'
+                store_value = self.state.stack.pop()
+                self.state.memory[slot] = store_value
+                result = f"STORED {store_value} @ {slot}"
         elif opcode == 'LOAD':
             if self.memory_mode == 'strict':
                 slot = value
@@ -488,6 +528,9 @@ class PauseLangVM:
                     return result
             else:
                 slot = value % SPEC['max_memory_slots'] if self.state.lane == Lane.DATA else value
+            if not (0 <= slot < SPEC['max_memory_slots']):
+                self.push_trap(TrapCode.INVALID_MEMORY)
+                return 'INVALID_MEMORY'
             loaded_value = self.state.memory.get(slot, 0)
             if len(self.state.stack) + 1 > SPEC['max_stack_size']:
                 self.push_trap(TrapCode.STACK_OVERFLOW)
@@ -558,24 +601,30 @@ class PauseLangVM:
 
         :param data_stream: List of integer operands.
         :param pause_stream: List of pause durations (seconds) – same length as data_stream.
-        :param sync: If True, calibrate drift using the sync phrase (if present).
+        :param sync: If True, calibrate offset/skew using the sync phrase (if present).
         :param labels: Optional label dictionary (from compiler).
         :param strict_sync: If True, NEVER auto‑strip the sync phrase.
                            Default False (auto‑strip if the stream begins with sync_phrase).
                            Set to True to avoid the auto‑strip foot‑gun.
         """
+        if len(data_stream) != len(pause_stream):
+            return {'error': f'Stream length mismatch: data={len(data_stream)}, pauses={len(pause_stream)}'}
+        if any(not isinstance(value, int) for value in data_stream):
+            return {'error': 'Operands must be integers'}
         if labels:
             self.state.labels = labels
 
         base_offset = 0
 
         def matches_sync_phrase(pauses):
-            if len(pauses) < len(SPEC['sync_phrase']):
-                return False
-            for p_obs, p_exp in zip(pauses[:len(SPEC['sync_phrase'])], SPEC['sync_phrase']):
-                if not self.quantizer.in_guard_band(p_obs, p_exp):
-                    return False
-            return True
+            phrase = pauses[:len(SPEC['sync_phrase'])]
+            if sync:
+                return self.quantizer.calibration_parameters(phrase) is not None
+            # Detect an uncalibrated phrase independently of earlier sessions.
+            raw_quantizer = TimeQuantizer(guard_band=self.quantizer.guard_band)
+            return (len(phrase) == len(SPEC['sync_phrase']) and
+                    all(raw_quantizer.in_guard_band(p, e)
+                        for p, e in zip(phrase, SPEC['sync_phrase'])))
 
         # Auto-strip sync if present (only if strict_sync is False)
         if not strict_sync and len(pause_stream) >= len(SPEC['sync_phrase']) and matches_sync_phrase(pause_stream):
@@ -586,9 +635,6 @@ class PauseLangVM:
             pause_stream = pause_stream[len(SPEC['sync_phrase']):]
             base_offset = len(SPEC['sync_phrase'])
 
-        if len(data_stream) != len(pause_stream):
-            return {'error': f'Stream length mismatch: data={len(data_stream)}, pauses={len(pause_stream)}'}
-
         results = []
         while self.state.pc < len(data_stream) and not self.state.halted:
             if not self.check_gas(): break
@@ -598,14 +644,7 @@ class PauseLangVM:
             executed_pc = self.state.pc
             value = data_stream[self.state.pc]
             raw_pause = pause_stream[self.state.pc]
-            # Decode: compare raw pause (seconds) against each instruction's
-            # canonical pause (also seconds, stored in instr.pause).
-            # INSTRUCTIONS is keyed by integer milliseconds; instr.pause is used for guard-band comparison.
-            instr = None
-            for _key_ms, instruction in INSTRUCTIONS.items():
-                if self.quantizer.in_guard_band(raw_pause, instruction.pause):
-                    instr = instruction
-                    break
+            instr = self.quantizer.decode(raw_pause)
             if instr is None:
                 self.push_trap(TrapCode.INVALID_INSTRUCTION)
                 instr = INSTRUCTIONS[25]  # PASS as fallback (25 ms key)
@@ -649,13 +688,13 @@ class PauseLangVM:
                 self.state.pc += 1
                 result = f"SKIPPING PC {self.state.pc + 1}"
             elif instr.opcode == 'LOOP_START':
-                if len(self.state.loop_stack) >= SPEC['max_loop_depth']:
+                if self.state.loop_stack and self.state.loop_stack[-1] == self.state.pc:
+                    result = 'LOOP_START'
+                elif len(self.state.loop_stack) >= SPEC['max_loop_depth']:
                     self.push_trap(TrapCode.LOOP_DEPTH_EXCEEDED)
                     result = "LOOP_DEPTH_EXCEEDED"
-                elif not self.state.loop_stack or self.state.loop_stack[-1] != self.state.pc:
-                    self.state.loop_stack.append(self.state.pc)
-                    result = "LOOP_START"
                 else:
+                    self.state.loop_stack.append(self.state.pc)
                     result = "LOOP_START"
             elif instr.opcode == 'LOOP_END':
                 if len(self.state.stack) == 0:
@@ -776,7 +815,7 @@ class PauseLangVM:
                         effective_slot = slot % SPEC['max_memory_slots']
                         mem_detail = f" [→ slot {effective_slot} (DATA)]"
                     else:
-                        if slot >= SPEC['max_memory_slots']:
+                        if not (0 <= slot < SPEC['max_memory_slots']):
                             mem_detail = f" [INVALID (META)]"
                         else:
                             mem_detail = f" [→ slot {slot} (META)]"
@@ -833,7 +872,7 @@ class PauseLangCompiler:
         'SQUARED':   ['DUP', 'MUL2'],
         'ENTER':     ['PUSH', 'SWAP'],
         'LEAVE':     ['SWAP', 'POP'],
-        'STOREI_POP':['STOREI', 'POP'],
+        'STOREI_POP':['STOREI'],
         'NOT':       [('PUSH', -1), 'SWAP', 'SUB2'],
         'LNOT':      [('PUSH', 1), 'SWAP', 'SUB2'],
         'NEG':       [('PUSH', 0), 'SWAP', 'SUB2'],
@@ -842,7 +881,7 @@ class PauseLangCompiler:
 
     @staticmethod
     def compile(source: str, debug: bool = False) -> Tuple[List[float], List[int], List[str], Dict[str, int]]:
-        lines = source.strip().split('\n')
+        lines = source.splitlines()
         labels = {}
         pc = len(SPEC['sync_phrase'])
 
@@ -853,6 +892,8 @@ class PauseLangCompiler:
                 continue
             if clean.endswith(':'):
                 label_name = clean[:-1].strip()
+                if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', label_name):
+                    raise ValueError(f"Invalid label '{label_name}' at line {line_num + 1}")
                 if label_name in labels:
                     raise ValueError(f"Duplicate label '{label_name}' at line {line_num + 1}")
                 labels[label_name] = pc
@@ -860,6 +901,8 @@ class PauseLangCompiler:
                     print(f"Label '{label_name}' → PC {pc}")
                 continue
             parts = clean.split()
+            if len(parts) > 2:
+                raise ValueError(f'One instruction per line; extra tokens at line {line_num + 1}')
             opcode = parts[0].upper()
             if opcode in PauseLangCompiler.ALIASES:
                 opcode = PauseLangCompiler.ALIASES[opcode]
@@ -880,6 +923,8 @@ class PauseLangCompiler:
             if not clean or clean.endswith(':'):
                 continue
             parts = clean.split()
+            if len(parts) > 2:
+                raise ValueError(f'One instruction per line; extra tokens at line {line_num + 1}')
             opcode = parts[0].upper()
             original_opcode = opcode
             if opcode in PauseLangCompiler.ALIASES:
@@ -891,7 +936,7 @@ class PauseLangCompiler:
                     value = labels[operand]
                     if debug:
                         print(f"Resolved label '{operand}' → {value}")
-                elif operand.lstrip('-').isdigit():
+                elif re.fullmatch(r'[+-]?[0-9]+', operand):
                     value = int(operand)
                 else:
                     raise ValueError(f"Unknown operand '{operand}' at line {line_num + 1}")
@@ -929,7 +974,7 @@ class WavExporter:
         """
         Generate a WAV file where each pause is represented as a silent gap,
         and each instruction is a short click (1ms beep) at the start of the pause.
-        The program can be decoded by measuring inter‑click intervals.
+        A terminal click makes the final interval measurable too.
         """
         try:
             import numpy as np
@@ -937,6 +982,11 @@ class WavExporter:
         except ImportError:
             print("WAV export requires numpy and scipy. Install with: pip install numpy scipy")
             return
+
+        if not isinstance(sample_rate, int) or sample_rate < 4000:
+            raise ValueError('sample_rate must be an integer >= 4000 Hz')
+        if any(not isfinite(p) or p < 0.001 for p in pauses):
+            raise ValueError('WAV pauses must be finite and at least 1 ms')
 
         # Generate click (1ms sine beep at 1kHz)
         click_duration = 0.001  # 1ms
@@ -951,6 +1001,7 @@ class WavExporter:
             silence_samples = max(0, int(sample_rate * pause) - click_samples)
             if silence_samples > 0:
                 audio.append(np.zeros(silence_samples, dtype=np.int16))
+        audio.append(click)  # terminal marker measures the final pause too
         audio = np.concatenate(audio)
         wavfile.write(filename, sample_rate, audio)
         print(f"Exported {len(pauses)} instructions to {filename}")
@@ -958,479 +1009,11 @@ class WavExporter:
 # === ENHANCED TORTURE TESTS ===
 
 class TortureTests:
-    @staticmethod
-    def test_labels():
-        source = """
-        start:
-            PUSH 5
-            SETF 0
-            JUMP_IF_ODD skip_even
-            PUSH 10
-        skip_even:
-            PUSH 20
-            JZ end
-            PUSH 30
-        end:
-            HALT
-        """
-        pauses, data, comments, labels = PauseLangCompiler.compile(source)
-        vm = PauseLangVM(debug=False)
-        result = vm.execute(data, pauses, labels=labels)
-        stack = result['final_state']['stack']
-        assert 10 not in stack, f"Failed to skip: {stack}"
-        assert stack == [5, 20, 30], f"Unexpected stack: {stack}"
-        return "✓ Label compilation passed"
-
-    @staticmethod
-    def test_aliases():
-        source = """
-            CONST 42
-            PEEK
-            DROP
-            CONST 0
-            SETF 0
-            JZ done
-            CONST 99
-        done:
-            HALT
-        """
-        pauses, data, comments, labels = PauseLangCompiler.compile(source)
-        vm = PauseLangVM(debug=False)
-        result = vm.execute(data, pauses)
-        stack = result['final_state']['stack']
-        assert stack == [42, 0], f"Aliases failed: {stack}"
-        assert 99 not in stack, f"Should have jumped over CONST 99"
-        return "✓ Instruction aliases passed"
-
-    @staticmethod
-    def test_division_semantics():
-        vm = PauseLangVM(debug=False)
-        tests = [(7,2,3), (-7,2,-3), (7,-2,-3), (-7,-2,3)]
-        for a,b,expected in tests:
-            vm.reset()
-            pauses = [0.045, 0.045, 0.115]
-            data = [a,b,0]
-            result = vm.execute(data, pauses, sync=False)
-            actual = result['final_state']['stack'][0]
-            assert actual == expected, f"DIV2({a},{b}) = {actual}, expected {expected}"
-        mod_tests = [(7,3,1), (-7,3,2), (7,-3,1), (-7,-3,2)]
-        for a,b,expected in mod_tests:
-            vm.reset()
-            pauses = [0.045, 0.045, 0.120]
-            data = [a,b,0]
-            result = vm.execute(data, pauses, sync=False)
-            actual = result['final_state']['stack'][0]
-            assert actual == expected, f"MOD2({a},{b}) = {actual}, expected {expected}"
-        return "✓ Division/modulo semantics passed"
-
-    @staticmethod
-    def test_jitter_gauntlet():
-        vm = PauseLangVM(debug=False)
-        pauses = [0.045, 0.045, 0.100]
-        data = [5, 3, 0]
-        for _ in range(100):
-            jittered = [p + random.uniform(-0.0007, 0.0007) for p in pauses]
-            result = vm.execute(data, jittered, sync=False)
-            vm.reset()
-            opcodes = [r[1] for r in result['results']]
-            assert opcodes == ['PUSH', 'PUSH', 'ADD2'], f"Jitter broke decoding: {opcodes}"
-        return "✓ Jitter gauntlet passed"
-
-    @staticmethod
-    def test_flag_race():
-        vm = PauseLangVM(debug=False)
-        pauses = [0.045, 0.040, 0.045, 0.100, 0.045, 0.120]
-        data = [7, 7, 3, 0, 2, 0]
-        result = vm.execute(data, pauses, sync=False)
-        final_flags = result['final_state']['flags']
-        assert final_flags['ZERO'] == True, f"Expected ZERO flag, got {final_flags}"
-        return "✓ Flag race passed"
-
-    @staticmethod
-    def test_stack_underflow_protection():
-        vm = PauseLangVM(debug=False)
-        ops_to_test = [(0.050, 'POP'), (0.055, 'DUP'), (0.200, 'SETIX')]
-        for pause, opcode in ops_to_test:
-            vm.reset()
-            result = vm.execute([0], [pause], sync=False)
-            assert 'STACK_UNDERFLOW' in result['traps'], f"{opcode} should trap on empty stack"
-        return "✓ Stack underflow protection passed"
-
-    @staticmethod
-    def test_loop_memory():
-        source = """
-        main:
-            CONST 3
-        loop_label:
-            LOOP_START
-            DEC
-            PEEK
-            LOOP_END
-            HALT
-        """
-        pauses, data, comments, labels = PauseLangCompiler.compile(source)
-        vm = PauseLangVM(gas_limit=1000, debug=False)
-        result = vm.execute(data, pauses, labels=labels)
-        assert len(vm.state.loop_stack) == 0, "LOOP_START/END memory leak detected"
-        final_stack = result['final_state']['stack']
-        assert final_stack == [0], f"Loop stack leak detected. Expected [0], got {final_stack}"
-        return "✓ LOOP memory management passed"
-
-    @staticmethod
-    def test_unconditional_jump():
-        source = """
-        main:
-            CONST 100
-            JMP skip
-            CONST 200
-            CONST 300
-        skip:
-            CONST 400
-            HALT
-        """
-        pauses, data, comments, labels = PauseLangCompiler.compile(source)
-        vm = PauseLangVM(debug=False)
-        result = vm.execute(data, pauses, labels=labels)
-        stack = result['final_state']['stack']
-        assert stack == [100, 400], f"JUMP failed: {stack}"
-        assert 200 not in stack and 300 not in stack, f"Failed to skip: {stack}"
-        return "✓ Unconditional JUMP passed"
-
-    @staticmethod
-    def test_div_overflow():
-        vm = PauseLangVM(debug=False)
-        INT32_MIN = -2**31
-        vm.reset()
-        pauses = [0.045, 0.045, 0.115]
-        data = [INT32_MIN, -1, 0]
-        result = vm.execute(data, pauses, sync=False)
-        stack = result['final_state']['stack']
-        flags = result['final_state']['flags']
-        assert stack == [INT32_MIN], f"DIV2 overflow failed: expected [{INT32_MIN}], got {stack}"
-        assert flags['OVERFLOW'] == True, "DIV2 overflow did not set OVERFLOW flag"
-        return "✓ DIV2 overflow (MIN / -1) passed"
-
-    @staticmethod
-    def test_sticky_overflow_flag():
-        vm = PauseLangVM(debug=False)
-        INT32_MAX = 2**31 - 1
-        vm.reset()
-        pauses = [0.045, 0.045, 0.100]
-        data = [INT32_MAX, INT32_MAX, 0]
-        result = vm.execute(data, pauses, sync=False)
-        flags = result['final_state']['flags']
-        assert flags['OVERFLOW'] == True, "First ADD2 should set OVERFLOW"
-        pauses.extend([0.045, 0.045, 0.100])
-        data.extend([1, 2, 0])
-        result = vm.execute(data, pauses, sync=False)
-        flags = result['final_state']['flags']
-        assert flags['OVERFLOW'] == False, "Second ADD2 should reset OVERFLOW flag"
-        return "✓ Sticky overflow flag fix passed"
-
-    @staticmethod
-    def test_stack_growth_protection():
-        vm = PauseLangVM(debug=False)
-        source = "CONST 1\n"
-        for _ in range(20):
-            source += "    DUP\n"
-        source += "    HALT"
-        pauses, data, comments, labels = PauseLangCompiler.compile(source)
-        result = vm.execute(data, pauses, labels=labels)
-        assert result['stats']['stack_high_water'] > 0, "Stack high water not tracked"
-        assert result['final_state']['stack_high_water'] > 0, "Stack high water not in state"
-        return "✓ Stack growth protection passed"
-
-    @staticmethod
-    def test_loop_depth_protection():
-        vm = PauseLangVM(debug=False, gas_limit=50000)
-        source = "CONST 2\n"
-        for i in range(300):
-            source += f"loop{i}:\n    LOOP_START\n"
-        source += "    CONST 1\n"
-        for i in range(300):
-            source += "    LOOP_END\n"
-        source += "HALT\n"
-        pauses, data, comments, labels = PauseLangCompiler.compile(source)
-        result = vm.execute(data, pauses, labels=labels)
-        assert 'LOOP_DEPTH_EXCEEDED' in result['traps'], "Loop depth limit not enforced"
-        return "✓ Loop depth protection passed"
-
-    @staticmethod
-    def test_macros_not():
-        source_not = "CONST 0\nNOT\nHALT"
-        pauses, data, _, _ = PauseLangCompiler.compile(source_not)
-        vm = PauseLangVM(debug=False)
-        res = vm.execute(data, pauses, sync=False)
-        assert res['final_state']['stack'] == [-1], f"NOT(0) failed: {res['final_state']['stack']}"
-        source_not2 = "CONST 1\nNOT\nHALT"
-        pauses, data, _, _ = PauseLangCompiler.compile(source_not2)
-        vm = PauseLangVM(debug=False)
-        res = vm.execute(data, pauses, sync=False)
-        assert res['final_state']['stack'] == [-2], f"NOT(1) failed: {res['final_state']['stack']}"
-        source_lnot = "CONST 0\nLNOT\nHALT"
-        pauses, data, _, _ = PauseLangCompiler.compile(source_lnot)
-        vm = PauseLangVM(debug=False)
-        res = vm.execute(data, pauses, sync=False)
-        assert res['final_state']['stack'] == [1], f"LNOT(0) failed: {res['final_state']['stack']}"
-        source_neg = "CONST 5\nNEG\nHALT"
-        pauses, data, _, _ = PauseLangCompiler.compile(source_neg)
-        vm = PauseLangVM(debug=False)
-        res = vm.execute(data, pauses, sync=False)
-        assert res['final_state']['stack'] == [-5], f"NEG(5) failed: {res['final_state']['stack']}"
-        return "✓ NOT/LNOT/NEG macros passed"
-
-    @staticmethod
-    def test_ret_without_call():
-        vm = PauseLangVM(debug=False)
-        pauses = [INSTRUCTIONS[140].pause]  # RET
-        data = [0]
-        result = vm.execute(data, pauses, sync=False)
-        assert 'RETURN_WITHOUT_CALL' in result['traps'], "RET without CALL should trap"
-        return "✓ RET trap works"
-
-    @staticmethod
-    def test_loadi_uninit():
-        """LOADI must return 0 for uninitialised slots, not trap."""
-        vm = PauseLangVM(debug=False)
-        # SETIX 42, LOADI, HALT
-        pauses = [INSTRUCTIONS[200].pause, INSTRUCTIONS[205].pause, INSTRUCTIONS[150].pause]
-        data   = [42, 0, 0]
-        result = vm.execute(data, pauses, sync=False)
-        stack = result['final_state']['stack']
-        assert stack == [0], f"LOADI on uninit should push 0, got {stack}"
-        assert 'INVALID_MEMORY' not in result['traps'], "LOADI should not trap on uninit"
-        return "✓ LOADI uninitialised returns 0"
-
-    @staticmethod
-    def test_rot():
-        """ROT: ( a b c -- b c a )"""
-        vm = PauseLangVM(debug=False)
-        P = INSTRUCTIONS[45].pause   # PUSH
-        R = INSTRUCTIONS[165].pause  # ROT
-        H = INSTRUCTIONS[150].pause  # HALT
-        pauses = [P, P, P, R, H]
-        data   = [10, 20, 30, 0, 0]
-        result = vm.execute(data, pauses, sync=False)
-        stack = result['final_state']['stack']
-        assert stack == [20, 30, 10], f"ROT failed: expected [20, 30, 10], got {stack}"
-        return "✓ ROT instruction passed"
-
-    @staticmethod
-    def test_rot_underflow():
-        """ROT with < 3 items should trap."""
-        vm = PauseLangVM(debug=False)
-        pauses = [INSTRUCTIONS[45].pause, INSTRUCTIONS[165].pause]  # PUSH + ROT (only 1 item)
-        data   = [99, 0]
-        result = vm.execute(data, pauses, sync=False)
-        assert 'STACK_UNDERFLOW' in result['traps'], "ROT with <3 items should trap"
-        return "✓ ROT underflow protection passed"
-
-    @staticmethod
-    def test_strict_sync():
-        """strict_sync=True must NOT auto-strip the sync phrase."""
-        P = INSTRUCTIONS[45].pause   # PUSH
-        H = INSTRUCTIONS[150].pause  # HALT
-        pauses = SPEC['sync_phrase'] + [P, H]
-        data   = [0, 0, 42, 0]
-
-        # Default behavior: auto-strip → only PUSH + HALT run
-        vm = PauseLangVM(debug=False)
-        res_normal = vm.execute(data, pauses, sync=False, strict_sync=False)
-        assert res_normal['final_state']['stack'] == [42], \
-            f"Default (strict_sync=False) should auto-strip and push 42, got {res_normal['final_state']['stack']}"
-
-        # strict_sync=True: sync phrase treated as normal instructions → should produce INVALID_INSTRUCTION
-        vm = PauseLangVM(debug=False)
-        res_strict = vm.execute(data, pauses, sync=False, strict_sync=True)
-        assert 'INVALID_INSTRUCTION' in res_strict['traps'], \
-            "strict_sync=True should treat sync phrase as invalid opcodes"
-        return "✓ strict_sync parameter passed"
-
-    @staticmethod
-    def test_short_sync_phrase():
-        """Verify short 2-symbol sync works with calibration."""
-        vm = PauseLangVM(debug=False)
-        P = INSTRUCTIONS[45].pause
-        H = INSTRUCTIONS[150].pause
-        pauses = SPEC['sync_phrase'] + [P, H]
-        data   = [0, 0, 42, 0]
-        result = vm.execute(data, pauses, sync=True, strict_sync=False)
-        assert 'error' not in result
-        assert result['final_state']['stack'] == [42]
-        return "✓ Short 2-symbol sync phrase passed"
-
-    @staticmethod
-    def test_sync_jitter_tolerance():
-        """Sync phrase should tolerate small jitter within guard band."""
-        vm = PauseLangVM(debug=False)
-        P = INSTRUCTIONS[45].pause
-        H = INSTRUCTIONS[150].pause
-        for _ in range(30):
-            jittered = [p + random.uniform(-0.0008, 0.0008) for p in SPEC['sync_phrase']]
-            pauses = jittered + [P, H]
-            data   = [0, 0, 99, 0]
-            result = vm.execute(data, pauses, sync=True, strict_sync=False)
-            assert 'error' not in result
-            vm.reset()
-        return "✓ Sync jitter tolerance passed"
-
-    @staticmethod
-    def test_ix_wrapping():
-        """IX must wrap around at max_memory_slots (256)."""
-        vm = PauseLangVM(debug=False)
-        # PUSH 255, SETIX, INCIX, GETIX, HALT
-        pauses = [INSTRUCTIONS[k].pause for k in [45, 200, 215, 220, 150]]
-        data   = [255, 0, 0, 0, 0]
-        result = vm.execute(data, pauses, sync=False)
-        assert result['final_state']['stack'] == [0]
-        assert result['final_state']['ix'] == 0
-        return "✓ IX register wrapping passed"
-
-    @staticmethod
-    def test_store_worked_example():
-        """Verify documented STORE example: PUSH 99 / STORE 42 → mem[42] = 99, then LOAD 42 → pushes 99."""
-        vm = PauseLangVM(debug=False)
-        # PUSH 99, STORE 42, LOAD 42, HALT
-        pauses = [INSTRUCTIONS[k].pause for k in [45, 80, 85, 150]]
-        data   = [99, 42, 42, 0]
-        result = vm.execute(data, pauses, sync=False)
-        mem = result['final_state']['memory']
-        stack = result['final_state']['stack']
-        assert mem.get(42) == 99, f"STORE failed: mem[42] = {mem.get(42)}"
-        assert stack == [99], f"LOAD should have pushed 99, got {stack}"
-        return "✓ STORE worked example verified"
-
-    @staticmethod
-    def test_fuzz_v077():
-        """Fuzz with full v0.7.13 instruction set (including ROT).
-        Pause stream uses canonical float pauses (seconds) from instr.pause."""
-        vm = PauseLangVM(debug=False)
-        all_pauses = [instr.pause for instr in INSTRUCTIONS.values()]
-        for _ in range(150):
-            length = random.randint(4, 20)
-            pauses = [random.choice(all_pauses) for _ in range(length)]
-            data = [random.randint(-200, 200) for _ in range(length)]
-            try:
-                vm.execute(data, pauses, sync=False)
-            except Exception as e:
-                raise AssertionError(f"Fuzz crash: {e}")
-            vm.reset()
-        return "✓ Fuzz test passed (v0.7.13 ISA)"
-
-    @staticmethod
-    def test_gas_exhaustion_halted():
-        """GAS_EXHAUSTED should set halted=True."""
-        vm = PauseLangVM(gas_limit=2, debug=False)
-        P = INSTRUCTIONS[45].pause  # PUSH
-        pauses = [P, P, P]  # three PUSHes, gas limit 2
-        data   = [1, 2, 3]
-        result = vm.execute(data, pauses, sync=False)
-        assert result['halted'] is True, "GAS_EXHAUSTED did not set halted"
-        assert 'GAS_EXHAUSTED' in result['traps']
-        return "✓ GAS_EXHAUSTED sets halted flag"
-
-    @staticmethod
-    def test_jitter_no_snap():
-        """Large jitter should produce INVALID_INSTRUCTION, not a silent wrong opcode."""
-        vm = PauseLangVM(debug=False)
-        # Expect PUSH (0.045) but add +3ms jitter → 0.048, beyond 1.5ms guard band
-        pauses = [0.048, INSTRUCTIONS[150].pause]
-        data   = [42, 0]
-        result = vm.execute(data, pauses, sync=False)
-        assert 'INVALID_INSTRUCTION' in result['traps'], "Large jitter should trap, not snap to MEAN"
-        opcodes = [r[1] for r in result['results']]
-        assert opcodes[0] == 'PASS', "Fallback PASS should be used on invalid decode"
-        return "✓ Jitter no longer snaps to wrong opcode"
-
-    @staticmethod
-    def test_loop_mismatch_trap():
-        """LOOP_END without LOOP_START must use the dedicated trap code."""
-        source = "CONST 9\nLOOP_END\nHALT"
-        pauses, data, _, labels = PauseLangCompiler.compile(source)
-        vm = PauseLangVM(debug=False)
-        result = vm.execute(data, pauses, labels=labels)
-        assert 'LOOP_MISMATCH' in result['traps'], result['traps']
-        assert 'INVALID_INSTRUCTION' not in result['traps'], result['traps']
-        return "✓ Dedicated LOOP_MISMATCH trap passed"
-
-    @staticmethod
-    def test_trace_pc_accuracy():
-        """Control-flow trace must record the instruction that executed, not its target."""
-        source = """
-        start:
-            CONST 1
-            JUMP target
-            CONST 999
-        target:
-            CONST 2
-            HALT
-        """
-        pauses, data, _, labels = PauseLangCompiler.compile(source)
-        vm = PauseLangVM(debug=False)
-        vm.execute(data, pauses, labels=labels)
-        pcs = [step['absolute_pc'] for step in vm.execution_trace]
-        assert pcs == [2, 3, 5, 6], f"Wrong trace PCs: {pcs}"
-        return "✓ Control-flow trace PC accuracy passed"
-
-    @staticmethod
-    def test_guard_boundary_stability():
-        """Exactly ±guard_band must decode inclusively despite float representation."""
-        target = INSTRUCTIONS[45].pause
-        q = TimeQuantizer()
-        assert q.in_guard_band(target + q.guard_band, target)
-        assert q.in_guard_band(target - q.guard_band, target)
-        return "✓ Guard boundary stability passed"
-
+    """Compatibility runner; tests now live outside the VM implementation."""
     @staticmethod
     def run_all():
-        tests = [
-            TortureTests.test_labels,
-            TortureTests.test_aliases,
-            TortureTests.test_unconditional_jump,
-            TortureTests.test_division_semantics,
-            TortureTests.test_div_overflow,
-            TortureTests.test_sticky_overflow_flag,
-            TortureTests.test_jitter_gauntlet,
-            TortureTests.test_flag_race,
-            TortureTests.test_stack_underflow_protection,
-            TortureTests.test_loop_memory,
-            TortureTests.test_stack_growth_protection,
-            TortureTests.test_loop_depth_protection,
-            TortureTests.test_macros_not,
-            TortureTests.test_ret_without_call,
-            TortureTests.test_loadi_uninit,
-            TortureTests.test_rot,
-            TortureTests.test_rot_underflow,
-            TortureTests.test_strict_sync,
-            TortureTests.test_short_sync_phrase,
-            TortureTests.test_sync_jitter_tolerance,
-            TortureTests.test_ix_wrapping,
-            TortureTests.test_store_worked_example,
-            TortureTests.test_fuzz_v077,
-            TortureTests.test_gas_exhaustion_halted,
-            TortureTests.test_jitter_no_snap,
-            TortureTests.test_loop_mismatch_trap,
-            TortureTests.test_trace_pc_accuracy,
-            TortureTests.test_guard_boundary_stability,
-        ]
-        print("\n🔥 TORTURE TEST SUITE v0.7.13 🔥")
-        print("=" * 50)
-        passed = 0
-        failed = 0
-        for test in tests:
-            try:
-                result = test()
-                print(result)
-                passed += 1
-            except AssertionError as e:
-                print(f"✗ {test.__name__} FAILED: {e}")
-                failed += 1
-            except Exception as e:
-                print(f"✗ {test.__name__} ERROR: {e}")
-                failed += 1
-        print("=" * 50)
-        print(f"Results: {passed} passed, {failed} failed")
-        return passed, failed
+        from tests.legacy_torture import TortureTests as LegacyTests
+        return LegacyTests.run_all()
 
 # === IOT DEMOS ===
 
@@ -1595,8 +1178,13 @@ class IoTDemos:
 # === MAIN ===
 
 if __name__ == "__main__":
-    print("Running enhanced Torture Test Suite for v0.7.13...\n")
-    passed, failed = TortureTests.run_all()
+    print("Running PauseLang v0.7.14 test suite...\n")
+    import unittest
+    from pathlib import Path
+    suite = unittest.defaultTestLoader.discover(str(Path(__file__).parent / 'tests'),
+                                               top_level_dir=str(Path(__file__).parent))
+    test_result = unittest.TextTestRunner(verbosity=2).run(suite)
+    failed = len(test_result.failures) + len(test_result.errors)
 
     if failed == 0:
         IoTDemos.run_all()
@@ -1610,8 +1198,9 @@ if __name__ == "__main__":
 
     print("\n" + "═" * 60)
     if failed == 0:
-        print("✅ ALL TESTS PASSED — v0.7.13")
+        print("✅ ALL TESTS PASSED — v0.7.14")
         print("   Ready for low-power IoT side-channel experiments!")
     else:
         print(f"❌ {failed} test(s) failed")
     print("═" * 60)
+    raise SystemExit(1 if failed else 0)

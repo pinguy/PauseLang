@@ -1,0 +1,4513 @@
+{
+  "note": "Synthetic independent traces, including noisy sync. The 4ms strategy is a first-match comparison, not the old effective 1.5ms default. No claim of real network reliability.",
+  "scenarios": {
+    "burst_8ms": {
+      "affine_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 17,
+            "DIFF": 16,
+            "MEAN": 24,
+            "REJECT": 370,
+            "SQUARE": 24
+          },
+          "ADD2": {
+            "ADD2": 32,
+            "CLEAR_STACK": 17,
+            "DIV2": 2,
+            "LOAD": 3,
+            "MOD2": 1,
+            "MUL2": 21,
+            "REJECT": 265,
+            "STORE": 1,
+            "SUB2": 23,
+            "SWAP": 21
+          },
+          "CALL": {
+            "CALL": 33,
+            "JUMP_IF_ZERO": 26,
+            "MOD2": 1,
+            "NOP": 24,
+            "REJECT": 302,
+            "RET": 27,
+            "SET_META": 16
+          },
+          "CLEAR_STACK": {
+            "ADD2": 15,
+            "CLEAR_STACK": 30,
+            "LOAD": 25,
+            "MUL2": 1,
+            "REJECT": 306,
+            "STORE": 5,
+            "SUB2": 30,
+            "SWAP": 22
+          },
+          "DIFF": {
+            "ADD": 16,
+            "DIFF": 19,
+            "IF_GT_15_SQUARE": 32,
+            "MEAN": 20,
+            "PASS": 23,
+            "REJECT": 292,
+            "SQUARE": 21
+          },
+          "DIV2": {
+            "DIV2": 31,
+            "MOD2": 19,
+            "MUL2": 22,
+            "REJECT": 275,
+            "SET_META": 39,
+            "SUB2": 23
+          },
+          "DOUBLE_IF_EVEN": {
+            "DIFF": 2,
+            "DOUBLE_IF_EVEN": 24,
+            "IF_GT_15_SQUARE": 19,
+            "NEGATE_IF_ODD": 23,
+            "PASS": 17,
+            "POP": 29,
+            "PUSH": 26,
+            "REJECT": 278,
+            "SQUARE": 17
+          },
+          "DUP": {
+            "DOUBLE_IF_EVEN": 2,
+            "DUP": 15,
+            "JUMP_IF_ODD": 28,
+            "LOOP_END": 1,
+            "LOOP_START": 11,
+            "NEGATE_IF_ODD": 11,
+            "POP": 17,
+            "PUSH": 17,
+            "REJECT": 252,
+            "SKIP_NEXT": 26
+          },
+          "GETIX": {
+            "GETIX": 65,
+            "INCIX": 29,
+            "REJECT": 319,
+            "STOREI": 2
+          },
+          "HALT": {
+            "HALT": 34,
+            "JUMP": 33,
+            "JUMP_IF_NONZERO": 14,
+            "NOP": 28,
+            "REJECT": 275,
+            "RET": 8,
+            "ROT": 1
+          },
+          "IF_GT_15_SQUARE": {
+            "DIFF": 17,
+            "DOUBLE_IF_EVEN": 15,
+            "DUP": 1,
+            "IF_GT_15_SQUARE": 15,
+            "MEAN": 2,
+            "NEGATE_IF_ODD": 14,
+            "PASS": 16,
+            "POP": 1,
+            "PUSH": 20,
+            "REJECT": 257,
+            "SQUARE": 12
+          },
+          "INCIX": {
+            "GETIX": 44,
+            "INCIX": 62,
+            "LOADI": 2,
+            "REJECT": 291,
+            "SETIX": 1,
+            "STOREI": 29
+          },
+          "JUMP": {
+            "HALT": 38,
+            "JUMP": 32,
+            "JUMP_IF_NONZERO": 42,
+            "NOP": 10,
+            "REJECT": 288,
+            "ROT": 4
+          },
+          "JUMP_IF_NONZERO": {
+            "HALT": 7,
+            "JUMP": 29,
+            "JUMP_IF_NONZERO": 30,
+            "NOP": 1,
+            "REJECT": 295,
+            "ROT": 45
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 20,
+            "JUMP_IF_ODD": 20,
+            "LOOP_END": 15,
+            "LOOP_START": 13,
+            "NEGATE_IF_ODD": 2,
+            "POP": 21,
+            "PUSH": 11,
+            "REJECT": 247,
+            "SKIP_NEXT": 33,
+            "STORE": 3
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 36,
+            "JUMP_IF_ZERO": 24,
+            "MOD2": 23,
+            "NOP": 1,
+            "REJECT": 291,
+            "RET": 25,
+            "SET_META": 21
+          },
+          "LOAD": {
+            "ADD2": 2,
+            "CLEAR_STACK": 28,
+            "LOAD": 21,
+            "LOOP_END": 22,
+            "LOOP_START": 9,
+            "REJECT": 293,
+            "SKIP_NEXT": 1,
+            "STORE": 22,
+            "SWAP": 24
+          },
+          "LOADI": {
+            "INCIX": 1,
+            "LOADI": 49,
+            "REJECT": 310,
+            "SETIX": 35,
+            "STOREI": 38
+          },
+          "LOOP_END": {
+            "DUP": 1,
+            "JUMP_IF_ODD": 6,
+            "LOAD": 23,
+            "LOOP_END": 28,
+            "LOOP_START": 19,
+            "REJECT": 335,
+            "SKIP_NEXT": 17,
+            "STORE": 23,
+            "SWAP": 5
+          },
+          "LOOP_START": {
+            "DUP": 8,
+            "JUMP_IF_ODD": 16,
+            "LOAD": 3,
+            "LOOP_END": 15,
+            "LOOP_START": 16,
+            "REJECT": 315,
+            "SKIP_NEXT": 16,
+            "STORE": 24
+          },
+          "MEAN": {
+            "ADD": 12,
+            "DIFF": 32,
+            "DOUBLE_IF_EVEN": 1,
+            "IF_GT_15_SQUARE": 3,
+            "MEAN": 17,
+            "PASS": 20,
+            "REJECT": 317,
+            "SQUARE": 19
+          },
+          "MOD2": {
+            "ADD2": 1,
+            "DIV2": 26,
+            "JUMP_IF_ZERO": 28,
+            "MOD2": 25,
+            "MUL2": 22,
+            "REJECT": 263,
+            "RET": 1,
+            "SET_META": 34,
+            "SUB2": 1
+          },
+          "MUL2": {
+            "ADD2": 16,
+            "CLEAR_STACK": 3,
+            "DIV2": 26,
+            "MOD2": 33,
+            "MUL2": 27,
+            "REJECT": 299,
+            "SUB2": 22,
+            "SWAP": 1
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 23,
+            "DUP": 23,
+            "IF_GT_15_SQUARE": 27,
+            "JUMP_IF_ODD": 2,
+            "NEGATE_IF_ODD": 25,
+            "PASS": 13,
+            "POP": 16,
+            "PUSH": 31,
+            "REJECT": 301
+          },
+          "NOP": {
+            "CALL": 12,
+            "HALT": 29,
+            "JUMP": 19,
+            "JUMP_IF_NONZERO": 2,
+            "JUMP_IF_ZERO": 2,
+            "NOP": 35,
+            "REJECT": 318,
+            "RET": 26,
+            "SET_META": 1
+          },
+          "PASS": {
+            "ADD": 1,
+            "DIFF": 19,
+            "DOUBLE_IF_EVEN": 15,
+            "IF_GT_15_SQUARE": 25,
+            "MEAN": 13,
+            "NEGATE_IF_ODD": 27,
+            "PASS": 22,
+            "POP": 1,
+            "REJECT": 283,
+            "SQUARE": 32
+          },
+          "POP": {
+            "DOUBLE_IF_EVEN": 9,
+            "DUP": 26,
+            "IF_GT_15_SQUARE": 1,
+            "JUMP_IF_ODD": 25,
+            "LOOP_START": 1,
+            "NEGATE_IF_ODD": 16,
+            "POP": 26,
+            "PUSH": 23,
+            "REJECT": 299,
+            "SKIP_NEXT": 14
+          },
+          "PUSH": {
+            "DOUBLE_IF_EVEN": 26,
+            "DUP": 16,
+            "IF_GT_15_SQUARE": 17,
+            "JUMP_IF_ODD": 22,
+            "NEGATE_IF_ODD": 28,
+            "PASS": 2,
+            "POP": 21,
+            "PUSH": 19,
+            "REJECT": 291,
+            "SQUARE": 1
+          },
+          "RET": {
+            "CALL": 23,
+            "HALT": 23,
+            "JUMP": 1,
+            "JUMP_IF_ZERO": 19,
+            "NOP": 34,
+            "REJECT": 299,
+            "RET": 38
+          },
+          "ROT": {
+            "JUMP": 4,
+            "JUMP_IF_NONZERO": 31,
+            "REJECT": 360,
+            "ROT": 49
+          },
+          "SETIX": {
+            "LOADI": 45,
+            "REJECT": 306,
+            "SETIX": 63,
+            "STOREI": 4
+          },
+          "SET_META": {
+            "CALL": 25,
+            "DIV2": 22,
+            "JUMP_IF_ZERO": 26,
+            "MOD2": 28,
+            "REJECT": 286,
+            "RET": 1,
+            "SET_META": 23
+          },
+          "SKIP_NEXT": {
+            "DUP": 18,
+            "JUMP_IF_ODD": 30,
+            "LOAD": 1,
+            "LOOP_END": 19,
+            "LOOP_START": 25,
+            "POP": 9,
+            "REJECT": 281,
+            "SKIP_NEXT": 20,
+            "STORE": 10
+          },
+          "SQUARE": {
+            "ADD": 18,
+            "DIFF": 26,
+            "DOUBLE_IF_EVEN": 16,
+            "IF_GT_15_SQUARE": 15,
+            "MEAN": 13,
+            "PASS": 25,
+            "REJECT": 293,
+            "SQUARE": 21
+          },
+          "STORE": {
+            "CLEAR_STACK": 4,
+            "JUMP_IF_ODD": 1,
+            "LOAD": 19,
+            "LOOP_END": 22,
+            "LOOP_START": 10,
+            "REJECT": 272,
+            "SKIP_NEXT": 15,
+            "STORE": 19,
+            "SWAP": 29
+          },
+          "STOREI": {
+            "GETIX": 1,
+            "INCIX": 35,
+            "LOADI": 40,
+            "REJECT": 275,
+            "STOREI": 64
+          },
+          "SUB2": {
+            "ADD2": 24,
+            "CLEAR_STACK": 30,
+            "DIV2": 23,
+            "LOAD": 1,
+            "MUL2": 26,
+            "REJECT": 304,
+            "SUB2": 30,
+            "SWAP": 9
+          },
+          "SWAP": {
+            "ADD2": 26,
+            "CLEAR_STACK": 21,
+            "LOAD": 22,
+            "LOOP_END": 5,
+            "REJECT": 311,
+            "STORE": 22,
+            "SUB2": 1,
+            "SWAP": 8
+          }
+        },
+        "correct": 1128,
+        "rejected": 11214,
+        "rejection_rate": 0.700875,
+        "sync_rejected_traces": 240,
+        "total": 16000,
+        "wrong": 3658,
+        "wrong_rate": 0.228625
+      },
+      "first_match_4ms_comparison": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 404,
+            "DIFF": 1,
+            "MEAN": 10,
+            "REJECT": 36
+          },
+          "ADD2": {
+            "ADD2": 313,
+            "CLEAR_STACK": 35,
+            "LOAD": 1,
+            "MUL2": 2,
+            "REJECT": 24,
+            "SUB2": 7,
+            "SWAP": 4
+          },
+          "CALL": {
+            "CALL": 344,
+            "JUMP_IF_ZERO": 35,
+            "NOP": 2,
+            "REJECT": 22,
+            "RET": 16,
+            "SET_META": 10
+          },
+          "CLEAR_STACK": {
+            "ADD2": 8,
+            "CLEAR_STACK": 356,
+            "LOAD": 10,
+            "REJECT": 22,
+            "STORE": 1,
+            "SUB2": 1,
+            "SWAP": 36
+          },
+          "DIFF": {
+            "ADD": 8,
+            "DIFF": 350,
+            "MEAN": 34,
+            "REJECT": 25,
+            "SQUARE": 6
+          },
+          "DIV2": {
+            "DIV2": 346,
+            "MOD2": 11,
+            "MUL2": 24,
+            "REJECT": 13,
+            "SET_META": 2,
+            "SUB2": 13
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 359,
+            "IF_GT_15_SQUARE": 25,
+            "NEGATE_IF_ODD": 21,
+            "PASS": 12,
+            "REJECT": 18
+          },
+          "DUP": {
+            "DUP": 290,
+            "JUMP_IF_ODD": 16,
+            "POP": 45,
+            "PUSH": 11,
+            "REJECT": 18
+          },
+          "GETIX": {
+            "GETIX": 335,
+            "INCIX": 42,
+            "REJECT": 26,
+            "STOREI": 12
+          },
+          "HALT": {
+            "HALT": 321,
+            "JUMP": 9,
+            "JUMP_IF_NONZERO": 3,
+            "NOP": 27,
+            "REJECT": 21,
+            "RET": 12
+          },
+          "IF_GT_15_SQUARE": {
+            "DOUBLE_IF_EVEN": 12,
+            "IF_GT_15_SQUARE": 304,
+            "NEGATE_IF_ODD": 1,
+            "PASS": 30,
+            "REJECT": 16,
+            "SQUARE": 7
+          },
+          "INCIX": {
+            "GETIX": 8,
+            "INCIX": 345,
+            "LOADI": 15,
+            "REJECT": 26,
+            "STOREI": 35
+          },
+          "JUMP": {
+            "HALT": 37,
+            "JUMP": 339,
+            "JUMP_IF_NONZERO": 10,
+            "NOP": 6,
+            "REJECT": 20,
+            "RET": 1,
+            "ROT": 1
+          },
+          "JUMP_IF_NONZERO": {
+            "HALT": 6,
+            "JUMP": 44,
+            "JUMP_IF_NONZERO": 324,
+            "REJECT": 19,
+            "ROT": 14
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 38,
+            "JUMP_IF_ODD": 309,
+            "POP": 8,
+            "REJECT": 16,
+            "SKIP_NEXT": 14
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 10,
+            "JUMP_IF_ZERO": 345,
+            "MOD2": 10,
+            "REJECT": 17,
+            "RET": 2,
+            "SET_META": 37
+          },
+          "LOAD": {
+            "CLEAR_STACK": 1,
+            "LOAD": 340,
+            "LOOP_END": 9,
+            "REJECT": 14,
+            "STORE": 49,
+            "SWAP": 9
+          },
+          "LOADI": {
+            "LOADI": 345,
+            "REJECT": 17,
+            "SETIX": 57,
+            "STOREI": 14
+          },
+          "LOOP_END": {
+            "LOAD": 1,
+            "LOOP_END": 364,
+            "LOOP_START": 48,
+            "REJECT": 22,
+            "SKIP_NEXT": 14,
+            "STORE": 8
+          },
+          "LOOP_START": {
+            "JUMP_IF_ODD": 6,
+            "LOOP_END": 13,
+            "LOOP_START": 346,
+            "REJECT": 16,
+            "SKIP_NEXT": 32
+          },
+          "MEAN": {
+            "ADD": 50,
+            "DIFF": 12,
+            "MEAN": 345,
+            "REJECT": 12,
+            "SQUARE": 2
+          },
+          "MOD2": {
+            "DIV2": 41,
+            "MOD2": 322,
+            "MUL2": 11,
+            "REJECT": 16,
+            "SET_META": 11
+          },
+          "MUL2": {
+            "ADD2": 11,
+            "DIV2": 14,
+            "MOD2": 1,
+            "MUL2": 344,
+            "REJECT": 18,
+            "SUB2": 39
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 45,
+            "IF_GT_15_SQUARE": 13,
+            "NEGATE_IF_ODD": 366,
+            "PASS": 1,
+            "POP": 1,
+            "PUSH": 12,
+            "REJECT": 23
+          },
+          "NOP": {
+            "CALL": 9,
+            "HALT": 11,
+            "JUMP": 1,
+            "NOP": 354,
+            "REJECT": 26,
+            "RET": 43
+          },
+          "PASS": {
+            "DIFF": 5,
+            "DOUBLE_IF_EVEN": 1,
+            "IF_GT_15_SQUARE": 13,
+            "PASS": 353,
+            "REJECT": 17,
+            "SQUARE": 49
+          },
+          "POP": {
+            "DUP": 11,
+            "JUMP_IF_ODD": 7,
+            "NEGATE_IF_ODD": 13,
+            "POP": 354,
+            "PUSH": 42,
+            "REJECT": 13
+          },
+          "PUSH": {
+            "DOUBLE_IF_EVEN": 11,
+            "DUP": 1,
+            "NEGATE_IF_ODD": 48,
+            "POP": 18,
+            "PUSH": 347,
+            "REJECT": 18
+          },
+          "RET": {
+            "CALL": 47,
+            "JUMP_IF_ZERO": 10,
+            "NOP": 11,
+            "REJECT": 26,
+            "RET": 342,
+            "SET_META": 1
+          },
+          "ROT": {
+            "JUMP": 14,
+            "JUMP_IF_NONZERO": 43,
+            "REJECT": 28,
+            "ROT": 359
+          },
+          "SETIX": {
+            "LOADI": 16,
+            "REJECT": 27,
+            "SETIX": 375
+          },
+          "SET_META": {
+            "CALL": 1,
+            "DIV2": 9,
+            "JUMP_IF_ZERO": 10,
+            "MOD2": 36,
+            "REJECT": 15,
+            "SET_META": 340
+          },
+          "SKIP_NEXT": {
+            "DUP": 10,
+            "JUMP_IF_ODD": 32,
+            "LOOP_END": 3,
+            "LOOP_START": 15,
+            "REJECT": 18,
+            "SKIP_NEXT": 335
+          },
+          "SQUARE": {
+            "DIFF": 31,
+            "IF_GT_15_SQUARE": 3,
+            "MEAN": 11,
+            "PASS": 7,
+            "REJECT": 12,
+            "SQUARE": 363
+          },
+          "STORE": {
+            "LOAD": 13,
+            "LOOP_END": 41,
+            "LOOP_START": 8,
+            "REJECT": 17,
+            "STORE": 311,
+            "SWAP": 1
+          },
+          "STOREI": {
+            "INCIX": 13,
+            "LOADI": 38,
+            "REJECT": 21,
+            "SETIX": 14,
+            "STOREI": 329
+          },
+          "SUB2": {
+            "ADD2": 35,
+            "CLEAR_STACK": 18,
+            "DIV2": 1,
+            "MUL2": 10,
+            "REJECT": 17,
+            "SUB2": 366
+          },
+          "SWAP": {
+            "CLEAR_STACK": 6,
+            "LOAD": 47,
+            "REJECT": 17,
+            "STORE": 7,
+            "SWAP": 339
+          }
+        },
+        "correct": 13023,
+        "rejected": 749,
+        "rejection_rate": 0.0468125,
+        "sync_rejected_traces": 22,
+        "total": 16000,
+        "wrong": 2228,
+        "wrong_rate": 0.13925
+      },
+      "offset_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 375,
+            "DIFF": 1,
+            "REJECT": 75
+          },
+          "ADD2": {
+            "ADD2": 320,
+            "MUL2": 2,
+            "REJECT": 63,
+            "SWAP": 1
+          },
+          "CALL": {
+            "CALL": 354,
+            "NOP": 2,
+            "REJECT": 70,
+            "SET_META": 3
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 364,
+            "LOAD": 2,
+            "REJECT": 67,
+            "SUB2": 1
+          },
+          "DIFF": {
+            "ADD": 2,
+            "DIFF": 352,
+            "REJECT": 68,
+            "SQUARE": 1
+          },
+          "DIV2": {
+            "DIV2": 350,
+            "MUL2": 1,
+            "REJECT": 51,
+            "SET_META": 4,
+            "SUB2": 3
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 366,
+            "PASS": 3,
+            "PUSH": 3,
+            "REJECT": 63
+          },
+          "DUP": {
+            "DUP": 311,
+            "PUSH": 2,
+            "REJECT": 63,
+            "SKIP_NEXT": 4
+          },
+          "GETIX": {
+            "GETIX": 342,
+            "INCIX": 2,
+            "REJECT": 70,
+            "STOREI": 1
+          },
+          "HALT": {
+            "HALT": 325,
+            "JUMP_IF_NONZERO": 4,
+            "REJECT": 63,
+            "RET": 1
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 306,
+            "NEGATE_IF_ODD": 2,
+            "PASS": 1,
+            "REJECT": 60,
+            "SQUARE": 1
+          },
+          "INCIX": {
+            "GETIX": 1,
+            "INCIX": 361,
+            "LOADI": 4,
+            "REJECT": 63
+          },
+          "JUMP": {
+            "JUMP": 346,
+            "NOP": 1,
+            "REJECT": 64,
+            "ROT": 3
+          },
+          "JUMP_IF_NONZERO": {
+            "HALT": 3,
+            "JUMP_IF_NONZERO": 332,
+            "REJECT": 72
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 323,
+            "LOOP_START": 4,
+            "POP": 1,
+            "REJECT": 57
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 1,
+            "JUMP_IF_ZERO": 349,
+            "MOD2": 4,
+            "REJECT": 66,
+            "RET": 1
+          },
+          "LOAD": {
+            "CLEAR_STACK": 1,
+            "LOAD": 353,
+            "LOOP_END": 2,
+            "REJECT": 65,
+            "STORE": 1
+          },
+          "LOADI": {
+            "INCIX": 1,
+            "LOADI": 369,
+            "REJECT": 63
+          },
+          "LOOP_END": {
+            "LOOP_END": 375,
+            "LOOP_START": 1,
+            "REJECT": 79,
+            "SKIP_NEXT": 1,
+            "STORE": 1
+          },
+          "LOOP_START": {
+            "JUMP_IF_ODD": 1,
+            "LOOP_END": 1,
+            "LOOP_START": 355,
+            "REJECT": 53,
+            "SKIP_NEXT": 1,
+            "STORE": 2
+          },
+          "MEAN": {
+            "MEAN": 366,
+            "REJECT": 51,
+            "SQUARE": 4
+          },
+          "MOD2": {
+            "JUMP_IF_ZERO": 1,
+            "MOD2": 331,
+            "MUL2": 3,
+            "REJECT": 66
+          },
+          "MUL2": {
+            "ADD2": 6,
+            "MOD2": 4,
+            "MUL2": 351,
+            "REJECT": 64,
+            "SUB2": 2
+          },
+          "NEGATE_IF_ODD": {
+            "IF_GT_15_SQUARE": 4,
+            "NEGATE_IF_ODD": 383,
+            "POP": 2,
+            "REJECT": 72
+          },
+          "NOP": {
+            "CALL": 2,
+            "JUMP": 1,
+            "NOP": 369,
+            "REJECT": 72
+          },
+          "PASS": {
+            "DIFF": 1,
+            "DOUBLE_IF_EVEN": 2,
+            "PASS": 370,
+            "REJECT": 65
+          },
+          "POP": {
+            "JUMP_IF_ODD": 8,
+            "NEGATE_IF_ODD": 2,
+            "POP": 360,
+            "PUSH": 1,
+            "REJECT": 69
+          },
+          "PUSH": {
+            "DOUBLE_IF_EVEN": 3,
+            "DUP": 2,
+            "PUSH": 366,
+            "REJECT": 72
+          },
+          "RET": {
+            "HALT": 2,
+            "JUMP_IF_ZERO": 4,
+            "REJECT": 79,
+            "RET": 352
+          },
+          "ROT": {
+            "JUMP": 4,
+            "REJECT": 63,
+            "ROT": 377
+          },
+          "SETIX": {
+            "LOADI": 1,
+            "REJECT": 63,
+            "SETIX": 351,
+            "STOREI": 3
+          },
+          "SET_META": {
+            "CALL": 3,
+            "DIV2": 3,
+            "REJECT": 61,
+            "SET_META": 344
+          },
+          "SKIP_NEXT": {
+            "DUP": 1,
+            "LOOP_END": 4,
+            "REJECT": 69,
+            "SKIP_NEXT": 339
+          },
+          "SQUARE": {
+            "DIFF": 1,
+            "IF_GT_15_SQUARE": 6,
+            "MEAN": 2,
+            "REJECT": 52,
+            "SQUARE": 366
+          },
+          "STORE": {
+            "LOOP_START": 3,
+            "REJECT": 64,
+            "STORE": 320,
+            "SWAP": 4
+          },
+          "STOREI": {
+            "REJECT": 71,
+            "SETIX": 3,
+            "STOREI": 341
+          },
+          "SUB2": {
+            "CLEAR_STACK": 8,
+            "DIV2": 3,
+            "REJECT": 56,
+            "SUB2": 380
+          },
+          "SWAP": {
+            "ADD2": 1,
+            "REJECT": 71,
+            "STORE": 1,
+            "SWAP": 343
+          }
+        },
+        "correct": 13337,
+        "rejected": 2475,
+        "rejection_rate": 0.1546875,
+        "sync_rejected_traces": 40,
+        "total": 16000,
+        "wrong": 188,
+        "wrong_rate": 0.01175
+      },
+      "offset_unique_2ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 393,
+            "DIFF": 2,
+            "MEAN": 1,
+            "REJECT": 55
+          },
+          "ADD2": {
+            "ADD2": 334,
+            "MUL2": 3,
+            "REJECT": 46,
+            "SUB2": 1,
+            "SWAP": 2
+          },
+          "CALL": {
+            "CALL": 364,
+            "JUMP_IF_ZERO": 1,
+            "NOP": 8,
+            "REJECT": 49,
+            "RET": 2,
+            "SET_META": 5
+          },
+          "CLEAR_STACK": {
+            "ADD2": 1,
+            "CLEAR_STACK": 377,
+            "LOAD": 5,
+            "REJECT": 49,
+            "SUB2": 1,
+            "SWAP": 1
+          },
+          "DIFF": {
+            "ADD": 3,
+            "DIFF": 367,
+            "PASS": 2,
+            "REJECT": 50,
+            "SQUARE": 1
+          },
+          "DIV2": {
+            "DIV2": 356,
+            "MUL2": 1,
+            "REJECT": 39,
+            "SET_META": 7,
+            "SUB2": 6
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 375,
+            "IF_GT_15_SQUARE": 1,
+            "PASS": 6,
+            "PUSH": 6,
+            "REJECT": 47
+          },
+          "DUP": {
+            "DUP": 327,
+            "POP": 2,
+            "PUSH": 7,
+            "REJECT": 37,
+            "SKIP_NEXT": 7
+          },
+          "GETIX": {
+            "GETIX": 360,
+            "INCIX": 2,
+            "REJECT": 50,
+            "STOREI": 3
+          },
+          "HALT": {
+            "HALT": 341,
+            "JUMP": 1,
+            "JUMP_IF_NONZERO": 5,
+            "NOP": 2,
+            "REJECT": 37,
+            "RET": 7
+          },
+          "IF_GT_15_SQUARE": {
+            "DOUBLE_IF_EVEN": 2,
+            "IF_GT_15_SQUARE": 320,
+            "NEGATE_IF_ODD": 5,
+            "PASS": 2,
+            "REJECT": 36,
+            "SQUARE": 5
+          },
+          "INCIX": {
+            "GETIX": 1,
+            "INCIX": 372,
+            "LOADI": 6,
+            "REJECT": 49,
+            "STOREI": 1
+          },
+          "JUMP": {
+            "HALT": 2,
+            "JUMP": 362,
+            "JUMP_IF_NONZERO": 1,
+            "NOP": 2,
+            "REJECT": 43,
+            "ROT": 4
+          },
+          "JUMP_IF_NONZERO": {
+            "HALT": 5,
+            "JUMP": 1,
+            "JUMP_IF_NONZERO": 352,
+            "REJECT": 47,
+            "ROT": 2
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 335,
+            "LOOP_START": 6,
+            "POP": 5,
+            "REJECT": 38,
+            "SKIP_NEXT": 1
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 2,
+            "JUMP_IF_ZERO": 365,
+            "MOD2": 5,
+            "REJECT": 46,
+            "RET": 3
+          },
+          "LOAD": {
+            "CLEAR_STACK": 3,
+            "LOAD": 366,
+            "LOOP_END": 4,
+            "REJECT": 47,
+            "STORE": 1,
+            "SWAP": 1
+          },
+          "LOADI": {
+            "INCIX": 6,
+            "LOADI": 383,
+            "REJECT": 44
+          },
+          "LOOP_END": {
+            "LOAD": 1,
+            "LOOP_END": 399,
+            "LOOP_START": 2,
+            "REJECT": 45,
+            "SKIP_NEXT": 9,
+            "STORE": 1
+          },
+          "LOOP_START": {
+            "JUMP_IF_ODD": 2,
+            "LOOP_END": 1,
+            "LOOP_START": 368,
+            "REJECT": 35,
+            "SKIP_NEXT": 3,
+            "STORE": 4
+          },
+          "MEAN": {
+            "DIFF": 1,
+            "MEAN": 387,
+            "REJECT": 25,
+            "SQUARE": 8
+          },
+          "MOD2": {
+            "DIV2": 2,
+            "JUMP_IF_ZERO": 4,
+            "MOD2": 353,
+            "MUL2": 4,
+            "REJECT": 37,
+            "SET_META": 1
+          },
+          "MUL2": {
+            "ADD2": 8,
+            "MOD2": 5,
+            "MUL2": 370,
+            "REJECT": 42,
+            "SUB2": 2
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 1,
+            "IF_GT_15_SQUARE": 9,
+            "NEGATE_IF_ODD": 397,
+            "POP": 3,
+            "PUSH": 3,
+            "REJECT": 48
+          },
+          "NOP": {
+            "CALL": 5,
+            "JUMP": 5,
+            "NOP": 387,
+            "REJECT": 47
+          },
+          "PASS": {
+            "DIFF": 2,
+            "DOUBLE_IF_EVEN": 5,
+            "IF_GT_15_SQUARE": 1,
+            "PASS": 389,
+            "REJECT": 40,
+            "SQUARE": 1
+          },
+          "POP": {
+            "JUMP_IF_ODD": 10,
+            "NEGATE_IF_ODD": 6,
+            "POP": 380,
+            "PUSH": 3,
+            "REJECT": 41
+          },
+          "PUSH": {
+            "DOUBLE_IF_EVEN": 5,
+            "DUP": 9,
+            "PUSH": 381,
+            "REJECT": 48
+          },
+          "RET": {
+            "CALL": 1,
+            "HALT": 4,
+            "JUMP_IF_ZERO": 9,
+            "NOP": 1,
+            "REJECT": 57,
+            "RET": 365
+          },
+          "ROT": {
+            "JUMP": 6,
+            "JUMP_IF_NONZERO": 2,
+            "REJECT": 47,
+            "ROT": 389
+          },
+          "SETIX": {
+            "LOADI": 1,
+            "REJECT": 45,
+            "SETIX": 367,
+            "STOREI": 5
+          },
+          "SET_META": {
+            "CALL": 4,
+            "DIV2": 6,
+            "MOD2": 1,
+            "REJECT": 34,
+            "SET_META": 366
+          },
+          "SKIP_NEXT": {
+            "DUP": 4,
+            "LOOP_END": 9,
+            "LOOP_START": 1,
+            "REJECT": 45,
+            "SKIP_NEXT": 354
+          },
+          "SQUARE": {
+            "DIFF": 1,
+            "IF_GT_15_SQUARE": 6,
+            "MEAN": 8,
+            "PASS": 1,
+            "REJECT": 27,
+            "SQUARE": 384
+          },
+          "STORE": {
+            "LOOP_START": 5,
+            "REJECT": 41,
+            "STORE": 336,
+            "SWAP": 9
+          },
+          "STOREI": {
+            "REJECT": 54,
+            "SETIX": 7,
+            "STOREI": 354
+          },
+          "SUB2": {
+            "ADD2": 2,
+            "CLEAR_STACK": 10,
+            "DIV2": 6,
+            "MUL2": 1,
+            "REJECT": 38,
+            "SUB2": 390
+          },
+          "SWAP": {
+            "ADD2": 2,
+            "CLEAR_STACK": 1,
+            "REJECT": 42,
+            "STORE": 2,
+            "SWAP": 369
+          }
+        },
+        "correct": 13934,
+        "rejected": 1647,
+        "rejection_rate": 0.1029375,
+        "sync_rejected_traces": 38,
+        "total": 16000,
+        "wrong": 419,
+        "wrong_rate": 0.0261875
+      }
+    },
+    "clean": {
+      "affine_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 452
+          },
+          "ADD2": {
+            "ADD2": 416
+          },
+          "CALL": {
+            "CALL": 422
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 431
+          },
+          "DIFF": {
+            "DIFF": 413
+          },
+          "DIV2": {
+            "DIV2": 427
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 416
+          },
+          "DUP": {
+            "DUP": 445
+          },
+          "GETIX": {
+            "GETIX": 422
+          },
+          "HALT": {
+            "HALT": 431
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 420
+          },
+          "INCIX": {
+            "INCIX": 443
+          },
+          "JUMP": {
+            "JUMP": 427
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 445
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 411
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 410
+          },
+          "LOAD": {
+            "LOAD": 421
+          },
+          "LOADI": {
+            "LOADI": 444
+          },
+          "LOOP_END": {
+            "LOOP_END": 425
+          },
+          "LOOP_START": {
+            "LOOP_START": 404
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 422
+          },
+          "MUL2": {
+            "MUL2": 394
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 371
+          },
+          "NOP": {
+            "NOP": 403
+          },
+          "PASS": {
+            "PASS": 401
+          },
+          "POP": {
+            "POP": 458
+          },
+          "PUSH": {
+            "PUSH": 413
+          },
+          "RET": {
+            "RET": 421
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 431
+          },
+          "SET_META": {
+            "SET_META": 393
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 409
+          },
+          "SQUARE": {
+            "SQUARE": 434
+          },
+          "STORE": {
+            "STORE": 421
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 437
+          },
+          "SWAP": {
+            "SWAP": 408
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "first_match_4ms_comparison": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 452
+          },
+          "ADD2": {
+            "ADD2": 416
+          },
+          "CALL": {
+            "CALL": 422
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 431
+          },
+          "DIFF": {
+            "DIFF": 413
+          },
+          "DIV2": {
+            "DIV2": 427
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 416
+          },
+          "DUP": {
+            "DUP": 445
+          },
+          "GETIX": {
+            "GETIX": 422
+          },
+          "HALT": {
+            "HALT": 431
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 420
+          },
+          "INCIX": {
+            "INCIX": 443
+          },
+          "JUMP": {
+            "JUMP": 427
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 445
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 411
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 410
+          },
+          "LOAD": {
+            "LOAD": 421
+          },
+          "LOADI": {
+            "LOADI": 444
+          },
+          "LOOP_END": {
+            "LOOP_END": 425
+          },
+          "LOOP_START": {
+            "LOOP_START": 404
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 422
+          },
+          "MUL2": {
+            "MUL2": 394
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 371
+          },
+          "NOP": {
+            "NOP": 403
+          },
+          "PASS": {
+            "PASS": 401
+          },
+          "POP": {
+            "POP": 458
+          },
+          "PUSH": {
+            "PUSH": 413
+          },
+          "RET": {
+            "RET": 421
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 431
+          },
+          "SET_META": {
+            "SET_META": 393
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 409
+          },
+          "SQUARE": {
+            "SQUARE": 434
+          },
+          "STORE": {
+            "STORE": 421
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 437
+          },
+          "SWAP": {
+            "SWAP": 408
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "offset_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 452
+          },
+          "ADD2": {
+            "ADD2": 416
+          },
+          "CALL": {
+            "CALL": 422
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 431
+          },
+          "DIFF": {
+            "DIFF": 413
+          },
+          "DIV2": {
+            "DIV2": 427
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 416
+          },
+          "DUP": {
+            "DUP": 445
+          },
+          "GETIX": {
+            "GETIX": 422
+          },
+          "HALT": {
+            "HALT": 431
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 420
+          },
+          "INCIX": {
+            "INCIX": 443
+          },
+          "JUMP": {
+            "JUMP": 427
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 445
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 411
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 410
+          },
+          "LOAD": {
+            "LOAD": 421
+          },
+          "LOADI": {
+            "LOADI": 444
+          },
+          "LOOP_END": {
+            "LOOP_END": 425
+          },
+          "LOOP_START": {
+            "LOOP_START": 404
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 422
+          },
+          "MUL2": {
+            "MUL2": 394
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 371
+          },
+          "NOP": {
+            "NOP": 403
+          },
+          "PASS": {
+            "PASS": 401
+          },
+          "POP": {
+            "POP": 458
+          },
+          "PUSH": {
+            "PUSH": 413
+          },
+          "RET": {
+            "RET": 421
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 431
+          },
+          "SET_META": {
+            "SET_META": 393
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 409
+          },
+          "SQUARE": {
+            "SQUARE": 434
+          },
+          "STORE": {
+            "STORE": 421
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 437
+          },
+          "SWAP": {
+            "SWAP": 408
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "offset_unique_2ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 452
+          },
+          "ADD2": {
+            "ADD2": 416
+          },
+          "CALL": {
+            "CALL": 422
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 431
+          },
+          "DIFF": {
+            "DIFF": 413
+          },
+          "DIV2": {
+            "DIV2": 427
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 416
+          },
+          "DUP": {
+            "DUP": 445
+          },
+          "GETIX": {
+            "GETIX": 422
+          },
+          "HALT": {
+            "HALT": 431
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 420
+          },
+          "INCIX": {
+            "INCIX": 443
+          },
+          "JUMP": {
+            "JUMP": 427
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 445
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 411
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 410
+          },
+          "LOAD": {
+            "LOAD": 421
+          },
+          "LOADI": {
+            "LOADI": 444
+          },
+          "LOOP_END": {
+            "LOOP_END": 425
+          },
+          "LOOP_START": {
+            "LOOP_START": 404
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 422
+          },
+          "MUL2": {
+            "MUL2": 394
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 371
+          },
+          "NOP": {
+            "NOP": 403
+          },
+          "PASS": {
+            "PASS": 401
+          },
+          "POP": {
+            "POP": 458
+          },
+          "PUSH": {
+            "PUSH": 413
+          },
+          "RET": {
+            "RET": 421
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 431
+          },
+          "SET_META": {
+            "SET_META": 393
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 409
+          },
+          "SQUARE": {
+            "SQUARE": 434
+          },
+          "STORE": {
+            "STORE": 421
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 437
+          },
+          "SWAP": {
+            "SWAP": 408
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      }
+    },
+    "gaussian_0.6ms": {
+      "affine_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 21,
+            "DIFF": 23,
+            "MEAN": 14,
+            "PASS": 1,
+            "REJECT": 347,
+            "SQUARE": 15
+          },
+          "ADD2": {
+            "ADD2": 29,
+            "CLEAR_STACK": 22,
+            "DIV2": 1,
+            "LOAD": 3,
+            "MUL2": 25,
+            "REJECT": 296,
+            "SUB2": 23,
+            "SWAP": 24
+          },
+          "CALL": {
+            "CALL": 43,
+            "JUMP_IF_ZERO": 46,
+            "NOP": 19,
+            "REJECT": 285,
+            "RET": 41,
+            "SET_META": 25
+          },
+          "CLEAR_STACK": {
+            "ADD2": 23,
+            "CLEAR_STACK": 26,
+            "LOAD": 35,
+            "MUL2": 1,
+            "REJECT": 282,
+            "STORE": 6,
+            "SUB2": 23,
+            "SWAP": 21
+          },
+          "DIFF": {
+            "ADD": 19,
+            "DIFF": 21,
+            "IF_GT_15_SQUARE": 14,
+            "MEAN": 14,
+            "PASS": 23,
+            "REJECT": 304,
+            "SQUARE": 21
+          },
+          "DIV2": {
+            "ADD2": 1,
+            "DIV2": 35,
+            "MOD2": 30,
+            "MUL2": 30,
+            "REJECT": 259,
+            "SET_META": 16,
+            "SUB2": 31
+          },
+          "DOUBLE_IF_EVEN": {
+            "DIFF": 1,
+            "DOUBLE_IF_EVEN": 30,
+            "IF_GT_15_SQUARE": 11,
+            "NEGATE_IF_ODD": 25,
+            "PASS": 22,
+            "POP": 13,
+            "PUSH": 25,
+            "REJECT": 285,
+            "SQUARE": 20
+          },
+          "DUP": {
+            "DUP": 30,
+            "JUMP_IF_ODD": 12,
+            "LOOP_START": 12,
+            "NEGATE_IF_ODD": 21,
+            "POP": 18,
+            "PUSH": 27,
+            "REJECT": 272,
+            "SKIP_NEXT": 37
+          },
+          "GETIX": {
+            "GETIX": 65,
+            "INCIX": 39,
+            "REJECT": 288
+          },
+          "HALT": {
+            "HALT": 43,
+            "JUMP": 48,
+            "JUMP_IF_NONZERO": 4,
+            "NOP": 40,
+            "REJECT": 257,
+            "RET": 19
+          },
+          "IF_GT_15_SQUARE": {
+            "DIFF": 24,
+            "DOUBLE_IF_EVEN": 20,
+            "IF_GT_15_SQUARE": 24,
+            "MEAN": 1,
+            "NEGATE_IF_ODD": 26,
+            "PASS": 22,
+            "PUSH": 13,
+            "REJECT": 266,
+            "SQUARE": 33
+          },
+          "INCIX": {
+            "GETIX": 25,
+            "INCIX": 73,
+            "REJECT": 284,
+            "STOREI": 48
+          },
+          "JUMP": {
+            "HALT": 45,
+            "JUMP": 43,
+            "JUMP_IF_NONZERO": 48,
+            "NOP": 23,
+            "REJECT": 269,
+            "ROT": 3
+          },
+          "JUMP_IF_NONZERO": {
+            "HALT": 12,
+            "JUMP": 46,
+            "JUMP_IF_NONZERO": 50,
+            "REJECT": 270,
+            "ROT": 53
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 20,
+            "JUMP_IF_ODD": 34,
+            "LOOP_END": 6,
+            "LOOP_START": 26,
+            "POP": 28,
+            "PUSH": 18,
+            "REJECT": 276,
+            "SKIP_NEXT": 21
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 42,
+            "JUMP_IF_ZERO": 39,
+            "MOD2": 34,
+            "REJECT": 237,
+            "RET": 15,
+            "SET_META": 44
+          },
+          "LOAD": {
+            "ADD2": 2,
+            "CLEAR_STACK": 33,
+            "LOAD": 24,
+            "LOOP_END": 27,
+            "LOOP_START": 10,
+            "REJECT": 290,
+            "STORE": 29,
+            "SWAP": 28
+          },
+          "LOADI": {
+            "LOADI": 66,
+            "REJECT": 257,
+            "SETIX": 50,
+            "STOREI": 36
+          },
+          "LOOP_END": {
+            "JUMP_IF_ODD": 9,
+            "LOAD": 23,
+            "LOOP_END": 18,
+            "LOOP_START": 26,
+            "REJECT": 269,
+            "SKIP_NEXT": 35,
+            "STORE": 22,
+            "SWAP": 1
+          },
+          "LOOP_START": {
+            "DUP": 17,
+            "JUMP_IF_ODD": 26,
+            "LOAD": 3,
+            "LOOP_END": 18,
+            "LOOP_START": 29,
+            "REJECT": 244,
+            "SKIP_NEXT": 16,
+            "STORE": 34
+          },
+          "MEAN": {
+            "ADD": 21,
+            "DIFF": 19,
+            "MEAN": 24,
+            "PASS": 17,
+            "REJECT": 324,
+            "SQUARE": 23
+          },
+          "MOD2": {
+            "DIV2": 31,
+            "JUMP_IF_ZERO": 26,
+            "MOD2": 31,
+            "MUL2": 26,
+            "REJECT": 297,
+            "SET_META": 23
+          },
+          "MUL2": {
+            "ADD2": 34,
+            "CLEAR_STACK": 1,
+            "DIV2": 25,
+            "MOD2": 36,
+            "MUL2": 30,
+            "REJECT": 258,
+            "SUB2": 27
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 13,
+            "DUP": 9,
+            "IF_GT_15_SQUARE": 22,
+            "NEGATE_IF_ODD": 15,
+            "PASS": 20,
+            "POP": 27,
+            "PUSH": 27,
+            "REJECT": 281
+          },
+          "NOP": {
+            "CALL": 19,
+            "HALT": 39,
+            "JUMP": 12,
+            "NOP": 33,
+            "REJECT": 259,
+            "RET": 40
+          },
+          "PASS": {
+            "ADD": 4,
+            "DIFF": 29,
+            "DOUBLE_IF_EVEN": 29,
+            "IF_GT_15_SQUARE": 12,
+            "MEAN": 21,
+            "NEGATE_IF_ODD": 15,
+            "PASS": 25,
+            "REJECT": 288,
+            "SQUARE": 16
+          },
+          "POP": {
+            "DOUBLE_IF_EVEN": 16,
+            "DUP": 20,
+            "IF_GT_15_SQUARE": 1,
+            "JUMP_IF_ODD": 29,
+            "NEGATE_IF_ODD": 28,
+            "POP": 26,
+            "PUSH": 16,
+            "REJECT": 298,
+            "SKIP_NEXT": 9
+          },
+          "PUSH": {
+            "DOUBLE_IF_EVEN": 23,
+            "DUP": 27,
+            "IF_GT_15_SQUARE": 17,
+            "JUMP_IF_ODD": 10,
+            "NEGATE_IF_ODD": 15,
+            "PASS": 1,
+            "POP": 21,
+            "PUSH": 20,
+            "REJECT": 289
+          },
+          "RET": {
+            "CALL": 44,
+            "HALT": 12,
+            "JUMP_IF_ZERO": 21,
+            "NOP": 34,
+            "REJECT": 257,
+            "RET": 34
+          },
+          "ROT": {
+            "JUMP": 13,
+            "JUMP_IF_NONZERO": 58,
+            "REJECT": 310,
+            "ROT": 44
+          },
+          "SETIX": {
+            "LOADI": 43,
+            "REJECT": 334,
+            "SETIX": 81
+          },
+          "SET_META": {
+            "CALL": 17,
+            "DIV2": 19,
+            "JUMP_IF_ZERO": 32,
+            "MOD2": 28,
+            "REJECT": 281,
+            "SET_META": 38
+          },
+          "SKIP_NEXT": {
+            "DUP": 27,
+            "JUMP_IF_ODD": 17,
+            "LOOP_END": 24,
+            "LOOP_START": 17,
+            "POP": 14,
+            "REJECT": 269,
+            "SKIP_NEXT": 34,
+            "STORE": 2
+          },
+          "SQUARE": {
+            "ADD": 20,
+            "DIFF": 13,
+            "DOUBLE_IF_EVEN": 16,
+            "IF_GT_15_SQUARE": 21,
+            "MEAN": 22,
+            "PASS": 23,
+            "REJECT": 256,
+            "SQUARE": 21
+          },
+          "STORE": {
+            "CLEAR_STACK": 3,
+            "LOAD": 22,
+            "LOOP_END": 22,
+            "LOOP_START": 31,
+            "REJECT": 274,
+            "SKIP_NEXT": 17,
+            "STORE": 36,
+            "SWAP": 23
+          },
+          "STOREI": {
+            "INCIX": 37,
+            "LOADI": 39,
+            "REJECT": 293,
+            "STOREI": 68
+          },
+          "SUB2": {
+            "ADD2": 30,
+            "CLEAR_STACK": 34,
+            "DIV2": 19,
+            "MUL2": 30,
+            "REJECT": 265,
+            "SUB2": 31,
+            "SWAP": 2
+          },
+          "SWAP": {
+            "ADD2": 22,
+            "CLEAR_STACK": 25,
+            "LOAD": 25,
+            "LOOP_END": 4,
+            "REJECT": 295,
+            "STORE": 24,
+            "SUB2": 1,
+            "SWAP": 33
+          }
+        },
+        "correct": 1367,
+        "rejected": 10665,
+        "rejection_rate": 0.6665625,
+        "sync_rejected_traces": 210,
+        "total": 16000,
+        "wrong": 3968,
+        "wrong_rate": 0.248
+      },
+      "first_match_4ms_comparison": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 421
+          },
+          "ADD2": {
+            "ADD2": 394,
+            "CLEAR_STACK": 29
+          },
+          "CALL": {
+            "CALL": 430,
+            "JUMP_IF_ZERO": 29
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 386,
+            "SWAP": 31
+          },
+          "DIFF": {
+            "DIFF": 382,
+            "MEAN": 34
+          },
+          "DIV2": {
+            "DIV2": 372,
+            "MUL2": 30
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 397,
+            "IF_GT_15_SQUARE": 35
+          },
+          "DUP": {
+            "DUP": 397,
+            "POP": 32
+          },
+          "GETIX": {
+            "GETIX": 352,
+            "INCIX": 40
+          },
+          "HALT": {
+            "HALT": 387,
+            "NOP": 24
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 393,
+            "PASS": 36
+          },
+          "INCIX": {
+            "INCIX": 387,
+            "STOREI": 43
+          },
+          "JUMP": {
+            "HALT": 38,
+            "JUMP": 393
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP": 38,
+            "JUMP_IF_NONZERO": 393
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 47,
+            "JUMP_IF_ODD": 382
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 378,
+            "SET_META": 33
+          },
+          "LOAD": {
+            "LOAD": 406,
+            "STORE": 37
+          },
+          "LOADI": {
+            "LOADI": 382,
+            "SETIX": 27
+          },
+          "LOOP_END": {
+            "LOOP_END": 367,
+            "LOOP_START": 36
+          },
+          "LOOP_START": {
+            "LOOP_START": 349,
+            "SKIP_NEXT": 38
+          },
+          "MEAN": {
+            "ADD": 30,
+            "MEAN": 398
+          },
+          "MOD2": {
+            "DIV2": 29,
+            "MOD2": 405
+          },
+          "MUL2": {
+            "MUL2": 379,
+            "SUB2": 32
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 28,
+            "NEGATE_IF_ODD": 386
+          },
+          "NOP": {
+            "NOP": 366,
+            "RET": 36
+          },
+          "PASS": {
+            "PASS": 405,
+            "SQUARE": 34
+          },
+          "POP": {
+            "POP": 392,
+            "PUSH": 51
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 29,
+            "PUSH": 394
+          },
+          "RET": {
+            "CALL": 40,
+            "RET": 362
+          },
+          "ROT": {
+            "JUMP_IF_NONZERO": 38,
+            "ROT": 387
+          },
+          "SETIX": {
+            "SETIX": 458
+          },
+          "SET_META": {
+            "MOD2": 38,
+            "SET_META": 377
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 46,
+            "SKIP_NEXT": 358
+          },
+          "SQUARE": {
+            "DIFF": 41,
+            "SQUARE": 351
+          },
+          "STORE": {
+            "LOOP_END": 40,
+            "STORE": 388
+          },
+          "STOREI": {
+            "LOADI": 43,
+            "STOREI": 394
+          },
+          "SUB2": {
+            "ADD2": 41,
+            "SUB2": 370
+          },
+          "SWAP": {
+            "LOAD": 29,
+            "SWAP": 400
+          }
+        },
+        "correct": 14718,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 1282,
+        "wrong_rate": 0.080125
+      },
+      "offset_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 399,
+            "REJECT": 22
+          },
+          "ADD2": {
+            "ADD2": 403,
+            "REJECT": 20
+          },
+          "CALL": {
+            "CALL": 438,
+            "REJECT": 21
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 401,
+            "REJECT": 16
+          },
+          "DIFF": {
+            "DIFF": 402,
+            "REJECT": 14
+          },
+          "DIV2": {
+            "DIV2": 389,
+            "REJECT": 13
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 416,
+            "REJECT": 16
+          },
+          "DUP": {
+            "DUP": 414,
+            "REJECT": 15
+          },
+          "GETIX": {
+            "GETIX": 373,
+            "REJECT": 19
+          },
+          "HALT": {
+            "HALT": 399,
+            "REJECT": 12
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 413,
+            "REJECT": 16
+          },
+          "INCIX": {
+            "INCIX": 408,
+            "REJECT": 22
+          },
+          "JUMP": {
+            "JUMP": 415,
+            "REJECT": 16
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 416,
+            "REJECT": 15
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 410,
+            "REJECT": 19
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 400,
+            "REJECT": 11
+          },
+          "LOAD": {
+            "LOAD": 424,
+            "REJECT": 19
+          },
+          "LOADI": {
+            "LOADI": 395,
+            "REJECT": 14
+          },
+          "LOOP_END": {
+            "LOOP_END": 386,
+            "REJECT": 17
+          },
+          "LOOP_START": {
+            "LOOP_START": 373,
+            "REJECT": 14
+          },
+          "MEAN": {
+            "MEAN": 414,
+            "REJECT": 14
+          },
+          "MOD2": {
+            "MOD2": 418,
+            "REJECT": 16
+          },
+          "MUL2": {
+            "MUL2": 395,
+            "REJECT": 16
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 403,
+            "REJECT": 11
+          },
+          "NOP": {
+            "NOP": 388,
+            "REJECT": 14
+          },
+          "PASS": {
+            "PASS": 417,
+            "REJECT": 22
+          },
+          "POP": {
+            "POP": 418,
+            "REJECT": 25
+          },
+          "PUSH": {
+            "PUSH": 405,
+            "REJECT": 18
+          },
+          "RET": {
+            "REJECT": 20,
+            "RET": 382
+          },
+          "ROT": {
+            "REJECT": 20,
+            "ROT": 405
+          },
+          "SETIX": {
+            "REJECT": 16,
+            "SETIX": 442
+          },
+          "SET_META": {
+            "REJECT": 15,
+            "SET_META": 400
+          },
+          "SKIP_NEXT": {
+            "REJECT": 27,
+            "SKIP_NEXT": 377
+          },
+          "SQUARE": {
+            "REJECT": 16,
+            "SQUARE": 376
+          },
+          "STORE": {
+            "REJECT": 17,
+            "STORE": 411
+          },
+          "STOREI": {
+            "REJECT": 17,
+            "STOREI": 420
+          },
+          "SUB2": {
+            "REJECT": 21,
+            "SUB2": 390
+          },
+          "SWAP": {
+            "REJECT": 15,
+            "SWAP": 414
+          }
+        },
+        "correct": 15349,
+        "rejected": 651,
+        "rejection_rate": 0.0406875,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "offset_unique_2ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 418,
+            "REJECT": 3
+          },
+          "ADD2": {
+            "ADD2": 419,
+            "REJECT": 4
+          },
+          "CALL": {
+            "CALL": 455,
+            "REJECT": 4
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 413,
+            "REJECT": 4
+          },
+          "DIFF": {
+            "DIFF": 414,
+            "REJECT": 2
+          },
+          "DIV2": {
+            "DIV2": 400,
+            "REJECT": 2
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 429,
+            "REJECT": 3
+          },
+          "DUP": {
+            "DUP": 427,
+            "REJECT": 2
+          },
+          "GETIX": {
+            "GETIX": 389,
+            "INCIX": 1,
+            "REJECT": 2
+          },
+          "HALT": {
+            "HALT": 410,
+            "REJECT": 1
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 426,
+            "REJECT": 3
+          },
+          "INCIX": {
+            "INCIX": 426,
+            "REJECT": 4
+          },
+          "JUMP": {
+            "JUMP": 428,
+            "REJECT": 3
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 429,
+            "REJECT": 2
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 425,
+            "REJECT": 4
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 409,
+            "REJECT": 2
+          },
+          "LOAD": {
+            "LOAD": 441,
+            "REJECT": 2
+          },
+          "LOADI": {
+            "LOADI": 407,
+            "REJECT": 2
+          },
+          "LOOP_END": {
+            "LOOP_END": 402,
+            "REJECT": 1
+          },
+          "LOOP_START": {
+            "LOOP_START": 385,
+            "REJECT": 2
+          },
+          "MEAN": {
+            "MEAN": 425,
+            "REJECT": 3
+          },
+          "MOD2": {
+            "MOD2": 432,
+            "REJECT": 2
+          },
+          "MUL2": {
+            "MUL2": 408,
+            "REJECT": 3
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 411,
+            "REJECT": 3
+          },
+          "NOP": {
+            "NOP": 399,
+            "REJECT": 3
+          },
+          "PASS": {
+            "PASS": 437,
+            "REJECT": 2
+          },
+          "POP": {
+            "POP": 441,
+            "REJECT": 2
+          },
+          "PUSH": {
+            "PUSH": 422,
+            "REJECT": 1
+          },
+          "RET": {
+            "REJECT": 3,
+            "RET": 399
+          },
+          "ROT": {
+            "REJECT": 4,
+            "ROT": 421
+          },
+          "SETIX": {
+            "REJECT": 3,
+            "SETIX": 455
+          },
+          "SET_META": {
+            "REJECT": 2,
+            "SET_META": 413
+          },
+          "SKIP_NEXT": {
+            "REJECT": 3,
+            "SKIP_NEXT": 401
+          },
+          "SQUARE": {
+            "REJECT": 4,
+            "SQUARE": 388
+          },
+          "STORE": {
+            "STORE": 428
+          },
+          "STOREI": {
+            "REJECT": 3,
+            "STOREI": 434
+          },
+          "SUB2": {
+            "REJECT": 3,
+            "SUB2": 408
+          },
+          "SWAP": {
+            "REJECT": 4,
+            "SWAP": 425
+          }
+        },
+        "correct": 15899,
+        "rejected": 100,
+        "rejection_rate": 0.00625,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 1,
+        "wrong_rate": 6.25e-05
+      }
+    },
+    "offset_10ms": {
+      "affine_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 399
+          },
+          "ADD2": {
+            "ADD2": 444
+          },
+          "CALL": {
+            "CALL": 437
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 430
+          },
+          "DIFF": {
+            "DIFF": 441
+          },
+          "DIV2": {
+            "DIV2": 402
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 396
+          },
+          "DUP": {
+            "DUP": 428
+          },
+          "GETIX": {
+            "GETIX": 390
+          },
+          "HALT": {
+            "HALT": 424
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 453
+          },
+          "INCIX": {
+            "INCIX": 451
+          },
+          "JUMP": {
+            "JUMP": 410
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 427
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 404
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 386
+          },
+          "LOAD": {
+            "LOAD": 414
+          },
+          "LOADI": {
+            "LOADI": 440
+          },
+          "LOOP_END": {
+            "LOOP_END": 443
+          },
+          "LOOP_START": {
+            "LOOP_START": 436
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 432
+          },
+          "MUL2": {
+            "MUL2": 432
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 397
+          },
+          "NOP": {
+            "NOP": 427
+          },
+          "PASS": {
+            "PASS": 420
+          },
+          "POP": {
+            "POP": 403
+          },
+          "PUSH": {
+            "PUSH": 419
+          },
+          "RET": {
+            "RET": 431
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 436
+          },
+          "SET_META": {
+            "SET_META": 425
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 438
+          },
+          "SQUARE": {
+            "SQUARE": 400
+          },
+          "STORE": {
+            "STORE": 417
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 395
+          },
+          "SWAP": {
+            "SWAP": 414
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "first_match_4ms_comparison": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 399
+          },
+          "ADD2": {
+            "ADD2": 444
+          },
+          "CALL": {
+            "CALL": 437
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 430
+          },
+          "DIFF": {
+            "DIFF": 441
+          },
+          "DIV2": {
+            "DIV2": 402
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 396
+          },
+          "DUP": {
+            "DUP": 428
+          },
+          "GETIX": {
+            "GETIX": 390
+          },
+          "HALT": {
+            "HALT": 424
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 453
+          },
+          "INCIX": {
+            "INCIX": 451
+          },
+          "JUMP": {
+            "JUMP": 410
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 427
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 404
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 386
+          },
+          "LOAD": {
+            "LOAD": 414
+          },
+          "LOADI": {
+            "LOADI": 440
+          },
+          "LOOP_END": {
+            "LOOP_END": 443
+          },
+          "LOOP_START": {
+            "LOOP_START": 436
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 432
+          },
+          "MUL2": {
+            "MUL2": 432
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 397
+          },
+          "NOP": {
+            "NOP": 427
+          },
+          "PASS": {
+            "PASS": 420
+          },
+          "POP": {
+            "POP": 403
+          },
+          "PUSH": {
+            "PUSH": 419
+          },
+          "RET": {
+            "RET": 431
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 436
+          },
+          "SET_META": {
+            "SET_META": 425
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 438
+          },
+          "SQUARE": {
+            "SQUARE": 400
+          },
+          "STORE": {
+            "STORE": 417
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 395
+          },
+          "SWAP": {
+            "SWAP": 414
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "offset_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 399
+          },
+          "ADD2": {
+            "ADD2": 444
+          },
+          "CALL": {
+            "CALL": 437
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 430
+          },
+          "DIFF": {
+            "DIFF": 441
+          },
+          "DIV2": {
+            "DIV2": 402
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 396
+          },
+          "DUP": {
+            "DUP": 428
+          },
+          "GETIX": {
+            "GETIX": 390
+          },
+          "HALT": {
+            "HALT": 424
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 453
+          },
+          "INCIX": {
+            "INCIX": 451
+          },
+          "JUMP": {
+            "JUMP": 410
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 427
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 404
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 386
+          },
+          "LOAD": {
+            "LOAD": 414
+          },
+          "LOADI": {
+            "LOADI": 440
+          },
+          "LOOP_END": {
+            "LOOP_END": 443
+          },
+          "LOOP_START": {
+            "LOOP_START": 436
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 432
+          },
+          "MUL2": {
+            "MUL2": 432
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 397
+          },
+          "NOP": {
+            "NOP": 427
+          },
+          "PASS": {
+            "PASS": 420
+          },
+          "POP": {
+            "POP": 403
+          },
+          "PUSH": {
+            "PUSH": 419
+          },
+          "RET": {
+            "RET": 431
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 436
+          },
+          "SET_META": {
+            "SET_META": 425
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 438
+          },
+          "SQUARE": {
+            "SQUARE": 400
+          },
+          "STORE": {
+            "STORE": 417
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 395
+          },
+          "SWAP": {
+            "SWAP": 414
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "offset_unique_2ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 399
+          },
+          "ADD2": {
+            "ADD2": 444
+          },
+          "CALL": {
+            "CALL": 437
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 430
+          },
+          "DIFF": {
+            "DIFF": 441
+          },
+          "DIV2": {
+            "DIV2": 402
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 396
+          },
+          "DUP": {
+            "DUP": 428
+          },
+          "GETIX": {
+            "GETIX": 390
+          },
+          "HALT": {
+            "HALT": 424
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 453
+          },
+          "INCIX": {
+            "INCIX": 451
+          },
+          "JUMP": {
+            "JUMP": 410
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 427
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 404
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 386
+          },
+          "LOAD": {
+            "LOAD": 414
+          },
+          "LOADI": {
+            "LOADI": 440
+          },
+          "LOOP_END": {
+            "LOOP_END": 443
+          },
+          "LOOP_START": {
+            "LOOP_START": 436
+          },
+          "MEAN": {
+            "MEAN": 421
+          },
+          "MOD2": {
+            "MOD2": 432
+          },
+          "MUL2": {
+            "MUL2": 432
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 397
+          },
+          "NOP": {
+            "NOP": 427
+          },
+          "PASS": {
+            "PASS": 420
+          },
+          "POP": {
+            "POP": 403
+          },
+          "PUSH": {
+            "PUSH": 419
+          },
+          "RET": {
+            "RET": 431
+          },
+          "ROT": {
+            "ROT": 415
+          },
+          "SETIX": {
+            "SETIX": 436
+          },
+          "SET_META": {
+            "SET_META": 425
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 438
+          },
+          "SQUARE": {
+            "SQUARE": 400
+          },
+          "STORE": {
+            "STORE": 417
+          },
+          "STOREI": {
+            "STOREI": 423
+          },
+          "SUB2": {
+            "SUB2": 395
+          },
+          "SWAP": {
+            "SWAP": 414
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      }
+    },
+    "scheduler_0.7ms": {
+      "affine_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 15,
+            "DIFF": 13,
+            "MEAN": 14,
+            "REJECT": 388,
+            "SQUARE": 13
+          },
+          "ADD2": {
+            "ADD2": 32,
+            "CLEAR_STACK": 20,
+            "LOAD": 5,
+            "MUL2": 16,
+            "REJECT": 317,
+            "SUB2": 22,
+            "SWAP": 28
+          },
+          "CALL": {
+            "CALL": 41,
+            "JUMP_IF_ZERO": 23,
+            "MOD2": 1,
+            "NOP": 8,
+            "REJECT": 311,
+            "RET": 25,
+            "SET_META": 14
+          },
+          "CLEAR_STACK": {
+            "ADD2": 21,
+            "CLEAR_STACK": 39,
+            "LOAD": 32,
+            "REJECT": 308,
+            "STORE": 6,
+            "SUB2": 11,
+            "SWAP": 26
+          },
+          "DIFF": {
+            "ADD": 19,
+            "DIFF": 20,
+            "IF_GT_15_SQUARE": 20,
+            "MEAN": 22,
+            "PASS": 13,
+            "REJECT": 334,
+            "SQUARE": 21
+          },
+          "DIV2": {
+            "DIV2": 25,
+            "MOD2": 25,
+            "MUL2": 17,
+            "REJECT": 293,
+            "SET_META": 10,
+            "SUB2": 25
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 22,
+            "IF_GT_15_SQUARE": 10,
+            "NEGATE_IF_ODD": 21,
+            "PASS": 18,
+            "POP": 5,
+            "PUSH": 29,
+            "REJECT": 315,
+            "SQUARE": 22
+          },
+          "DUP": {
+            "DUP": 26,
+            "JUMP_IF_ODD": 21,
+            "LOOP_START": 3,
+            "NEGATE_IF_ODD": 15,
+            "POP": 18,
+            "PUSH": 18,
+            "REJECT": 307,
+            "SKIP_NEXT": 16
+          },
+          "GETIX": {
+            "GETIX": 77,
+            "INCIX": 33,
+            "REJECT": 315
+          },
+          "HALT": {
+            "HALT": 38,
+            "JUMP": 32,
+            "JUMP_IF_NONZERO": 4,
+            "NOP": 25,
+            "REJECT": 316,
+            "RET": 16
+          },
+          "IF_GT_15_SQUARE": {
+            "DIFF": 12,
+            "DOUBLE_IF_EVEN": 20,
+            "IF_GT_15_SQUARE": 21,
+            "MEAN": 3,
+            "NEGATE_IF_ODD": 20,
+            "PASS": 14,
+            "PUSH": 7,
+            "REJECT": 298,
+            "SQUARE": 10
+          },
+          "INCIX": {
+            "GETIX": 17,
+            "INCIX": 79,
+            "REJECT": 324,
+            "STOREI": 44
+          },
+          "JUMP": {
+            "HALT": 18,
+            "JUMP": 41,
+            "JUMP_IF_NONZERO": 22,
+            "NOP": 15,
+            "REJECT": 313,
+            "ROT": 2
+          },
+          "JUMP_IF_NONZERO": {
+            "HALT": 6,
+            "JUMP": 25,
+            "JUMP_IF_NONZERO": 31,
+            "REJECT": 315,
+            "ROT": 30
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 12,
+            "JUMP_IF_ODD": 19,
+            "LOOP_END": 7,
+            "LOOP_START": 15,
+            "NEGATE_IF_ODD": 1,
+            "POP": 11,
+            "PUSH": 12,
+            "REJECT": 301,
+            "SKIP_NEXT": 21
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 34,
+            "JUMP_IF_ZERO": 26,
+            "MOD2": 27,
+            "REJECT": 292,
+            "RET": 8,
+            "SET_META": 20
+          },
+          "LOAD": {
+            "CLEAR_STACK": 13,
+            "LOAD": 32,
+            "LOOP_END": 16,
+            "LOOP_START": 7,
+            "REJECT": 307,
+            "STORE": 15,
+            "SWAP": 16
+          },
+          "LOADI": {
+            "LOADI": 70,
+            "REJECT": 291,
+            "SETIX": 49,
+            "STOREI": 19
+          },
+          "LOOP_END": {
+            "JUMP_IF_ODD": 9,
+            "LOAD": 12,
+            "LOOP_END": 34,
+            "LOOP_START": 21,
+            "REJECT": 317,
+            "SKIP_NEXT": 18,
+            "STORE": 24,
+            "SWAP": 3
+          },
+          "LOOP_START": {
+            "DUP": 23,
+            "JUMP_IF_ODD": 14,
+            "LOAD": 2,
+            "LOOP_END": 25,
+            "LOOP_START": 28,
+            "REJECT": 311,
+            "SKIP_NEXT": 16,
+            "STORE": 13
+          },
+          "MEAN": {
+            "ADD": 23,
+            "DIFF": 20,
+            "MEAN": 22,
+            "PASS": 6,
+            "REJECT": 334,
+            "SQUARE": 14
+          },
+          "MOD2": {
+            "DIV2": 22,
+            "JUMP_IF_ZERO": 9,
+            "MOD2": 33,
+            "MUL2": 18,
+            "REJECT": 295,
+            "SET_META": 25,
+            "SUB2": 1
+          },
+          "MUL2": {
+            "ADD2": 24,
+            "CLEAR_STACK": 1,
+            "DIV2": 26,
+            "MOD2": 9,
+            "MUL2": 39,
+            "REJECT": 312,
+            "SUB2": 22
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 15,
+            "DUP": 7,
+            "IF_GT_15_SQUARE": 16,
+            "NEGATE_IF_ODD": 24,
+            "PASS": 23,
+            "POP": 21,
+            "PUSH": 27,
+            "REJECT": 312
+          },
+          "NOP": {
+            "CALL": 26,
+            "HALT": 27,
+            "JUMP": 4,
+            "NOP": 31,
+            "REJECT": 283,
+            "RET": 21
+          },
+          "PASS": {
+            "ADD": 3,
+            "DIFF": 22,
+            "DOUBLE_IF_EVEN": 22,
+            "IF_GT_15_SQUARE": 27,
+            "MEAN": 14,
+            "NEGATE_IF_ODD": 12,
+            "PASS": 24,
+            "REJECT": 299,
+            "SQUARE": 17
+          },
+          "POP": {
+            "DOUBLE_IF_EVEN": 14,
+            "DUP": 21,
+            "JUMP_IF_ODD": 23,
+            "NEGATE_IF_ODD": 10,
+            "POP": 16,
+            "PUSH": 16,
+            "REJECT": 303,
+            "SKIP_NEXT": 4
+          },
+          "PUSH": {
+            "DOUBLE_IF_EVEN": 16,
+            "DUP": 32,
+            "IF_GT_15_SQUARE": 21,
+            "JUMP_IF_ODD": 3,
+            "NEGATE_IF_ODD": 8,
+            "PASS": 1,
+            "POP": 19,
+            "PUSH": 29,
+            "REJECT": 272
+          },
+          "RET": {
+            "CALL": 21,
+            "HALT": 1,
+            "JUMP_IF_ZERO": 20,
+            "NOP": 21,
+            "REJECT": 301,
+            "RET": 26
+          },
+          "ROT": {
+            "JUMP": 8,
+            "JUMP_IF_NONZERO": 33,
+            "REJECT": 308,
+            "ROT": 57
+          },
+          "SETIX": {
+            "LOADI": 28,
+            "REJECT": 323,
+            "SETIX": 35
+          },
+          "SET_META": {
+            "CALL": 14,
+            "DIV2": 29,
+            "JUMP_IF_ZERO": 30,
+            "MOD2": 14,
+            "MUL2": 2,
+            "REJECT": 303,
+            "SET_META": 30
+          },
+          "SKIP_NEXT": {
+            "DUP": 15,
+            "JUMP_IF_ODD": 16,
+            "LOOP_END": 16,
+            "LOOP_START": 22,
+            "POP": 21,
+            "REJECT": 323,
+            "SKIP_NEXT": 31
+          },
+          "SQUARE": {
+            "ADD": 20,
+            "DIFF": 19,
+            "DOUBLE_IF_EVEN": 6,
+            "IF_GT_15_SQUARE": 16,
+            "MEAN": 14,
+            "PASS": 21,
+            "REJECT": 288,
+            "SQUARE": 27
+          },
+          "STORE": {
+            "LOAD": 19,
+            "LOOP_END": 15,
+            "LOOP_START": 20,
+            "REJECT": 306,
+            "SKIP_NEXT": 9,
+            "STORE": 32,
+            "SWAP": 28
+          },
+          "STOREI": {
+            "INCIX": 15,
+            "LOADI": 42,
+            "REJECT": 279,
+            "STOREI": 67
+          },
+          "SUB2": {
+            "ADD2": 15,
+            "CLEAR_STACK": 21,
+            "DIV2": 20,
+            "MUL2": 18,
+            "REJECT": 295,
+            "SUB2": 26,
+            "SWAP": 3
+          },
+          "SWAP": {
+            "ADD2": 14,
+            "CLEAR_STACK": 31,
+            "LOAD": 17,
+            "LOOP_END": 11,
+            "REJECT": 325,
+            "STORE": 27,
+            "SWAP": 33
+          }
+        },
+        "correct": 1298,
+        "rejected": 11734,
+        "rejection_rate": 0.733375,
+        "sync_rejected_traces": 270,
+        "total": 16000,
+        "wrong": 2968,
+        "wrong_rate": 0.1855
+      },
+      "first_match_4ms_comparison": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 441,
+            "REJECT": 2
+          },
+          "ADD2": {
+            "ADD2": 358,
+            "CLEAR_STACK": 82
+          },
+          "CALL": {
+            "CALL": 339,
+            "JUMP_IF_ZERO": 82,
+            "RET": 1,
+            "SET_META": 1
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 347,
+            "SWAP": 96
+          },
+          "DIFF": {
+            "ADD": 1,
+            "DIFF": 358,
+            "MEAN": 90
+          },
+          "DIV2": {
+            "DIV2": 310,
+            "MOD2": 1,
+            "MUL2": 84
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 348,
+            "IF_GT_15_SQUARE": 93,
+            "PASS": 1
+          },
+          "DUP": {
+            "DUP": 311,
+            "POP": 113
+          },
+          "GETIX": {
+            "GETIX": 341,
+            "INCIX": 84
+          },
+          "HALT": {
+            "HALT": 338,
+            "NOP": 93
+          },
+          "IF_GT_15_SQUARE": {
+            "DOUBLE_IF_EVEN": 1,
+            "IF_GT_15_SQUARE": 313,
+            "PASS": 91
+          },
+          "INCIX": {
+            "INCIX": 364,
+            "STOREI": 100
+          },
+          "JUMP": {
+            "HALT": 84,
+            "JUMP": 327
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP": 89,
+            "JUMP_IF_NONZERO": 317,
+            "ROT": 1
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 88,
+            "JUMP_IF_ODD": 310,
+            "POP": 1
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 1,
+            "JUMP_IF_ZERO": 318,
+            "SET_META": 88
+          },
+          "LOAD": {
+            "LOAD": 311,
+            "STORE": 94,
+            "SWAP": 1
+          },
+          "LOADI": {
+            "LOADI": 341,
+            "SETIX": 88
+          },
+          "LOOP_END": {
+            "LOOP_END": 348,
+            "LOOP_START": 88,
+            "SKIP_NEXT": 1,
+            "STORE": 1
+          },
+          "LOOP_START": {
+            "LOOP_START": 320,
+            "SKIP_NEXT": 112
+          },
+          "MEAN": {
+            "ADD": 77,
+            "MEAN": 342
+          },
+          "MOD2": {
+            "DIV2": 77,
+            "MOD2": 325,
+            "SET_META": 1
+          },
+          "MUL2": {
+            "MUL2": 323,
+            "SUB2": 110
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 80,
+            "NEGATE_IF_ODD": 364,
+            "PUSH": 1
+          },
+          "NOP": {
+            "HALT": 1,
+            "NOP": 309,
+            "RET": 82
+          },
+          "PASS": {
+            "IF_GT_15_SQUARE": 1,
+            "PASS": 341,
+            "SQUARE": 98
+          },
+          "POP": {
+            "POP": 321,
+            "PUSH": 86
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 75,
+            "PUSH": 326
+          },
+          "RET": {
+            "CALL": 67,
+            "NOP": 1,
+            "RET": 322
+          },
+          "ROT": {
+            "JUMP_IF_NONZERO": 89,
+            "ROT": 317
+          },
+          "SETIX": {
+            "LOADI": 2,
+            "REJECT": 4,
+            "SETIX": 380
+          },
+          "SET_META": {
+            "MOD2": 92,
+            "SET_META": 330
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 96,
+            "LOOP_START": 1,
+            "SKIP_NEXT": 347
+          },
+          "SQUARE": {
+            "DIFF": 82,
+            "SQUARE": 329
+          },
+          "STORE": {
+            "LOOP_END": 84,
+            "LOOP_START": 1,
+            "STORE": 344
+          },
+          "STOREI": {
+            "INCIX": 1,
+            "LOADI": 71,
+            "STOREI": 331
+          },
+          "SUB2": {
+            "ADD2": 91,
+            "CLEAR_STACK": 1,
+            "SUB2": 306
+          },
+          "SWAP": {
+            "LOAD": 98,
+            "SWAP": 360
+          }
+        },
+        "correct": 12777,
+        "rejected": 6,
+        "rejection_rate": 0.000375,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 3217,
+        "wrong_rate": 0.2010625
+      },
+      "offset_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 349,
+            "REJECT": 94
+          },
+          "ADD2": {
+            "ADD2": 341,
+            "CLEAR_STACK": 2,
+            "REJECT": 97
+          },
+          "CALL": {
+            "CALL": 333,
+            "JUMP_IF_ZERO": 2,
+            "REJECT": 87,
+            "RET": 1
+          },
+          "CLEAR_STACK": {
+            "ADD2": 1,
+            "CLEAR_STACK": 328,
+            "REJECT": 109,
+            "SWAP": 5
+          },
+          "DIFF": {
+            "DIFF": 338,
+            "MEAN": 1,
+            "REJECT": 109,
+            "SQUARE": 1
+          },
+          "DIV2": {
+            "DIV2": 291,
+            "MOD2": 1,
+            "MUL2": 1,
+            "REJECT": 102
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 338,
+            "IF_GT_15_SQUARE": 1,
+            "REJECT": 103
+          },
+          "DUP": {
+            "DUP": 315,
+            "POP": 3,
+            "REJECT": 106
+          },
+          "GETIX": {
+            "GETIX": 311,
+            "INCIX": 3,
+            "REJECT": 111
+          },
+          "HALT": {
+            "HALT": 335,
+            "NOP": 5,
+            "REJECT": 91
+          },
+          "IF_GT_15_SQUARE": {
+            "DOUBLE_IF_EVEN": 2,
+            "IF_GT_15_SQUARE": 319,
+            "PASS": 1,
+            "REJECT": 83
+          },
+          "INCIX": {
+            "INCIX": 362,
+            "REJECT": 99,
+            "STOREI": 3
+          },
+          "JUMP": {
+            "JUMP": 317,
+            "REJECT": 94
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP": 3,
+            "JUMP_IF_NONZERO": 317,
+            "REJECT": 85,
+            "ROT": 2
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 2,
+            "JUMP_IF_ODD": 307,
+            "REJECT": 90
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 1,
+            "JUMP_IF_ZERO": 315,
+            "REJECT": 89,
+            "SET_META": 2
+          },
+          "LOAD": {
+            "LOAD": 316,
+            "REJECT": 86,
+            "STORE": 3,
+            "SWAP": 1
+          },
+          "LOADI": {
+            "LOADI": 329,
+            "REJECT": 99,
+            "STOREI": 1
+          },
+          "LOOP_END": {
+            "LOOP_END": 329,
+            "LOOP_START": 3,
+            "REJECT": 105,
+            "STORE": 1
+          },
+          "LOOP_START": {
+            "LOOP_START": 332,
+            "REJECT": 97,
+            "SKIP_NEXT": 3
+          },
+          "MEAN": {
+            "ADD": 1,
+            "MEAN": 328,
+            "REJECT": 90
+          },
+          "MOD2": {
+            "DIV2": 4,
+            "MOD2": 311,
+            "REJECT": 86,
+            "SET_META": 2
+          },
+          "MUL2": {
+            "MUL2": 329,
+            "REJECT": 101,
+            "SUB2": 3
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 1,
+            "NEGATE_IF_ODD": 353,
+            "PUSH": 2,
+            "REJECT": 89
+          },
+          "NOP": {
+            "NOP": 316,
+            "REJECT": 71,
+            "RET": 5
+          },
+          "PASS": {
+            "IF_GT_15_SQUARE": 1,
+            "PASS": 349,
+            "REJECT": 88,
+            "SQUARE": 2
+          },
+          "POP": {
+            "POP": 310,
+            "PUSH": 1,
+            "REJECT": 96
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 2,
+            "PUSH": 315,
+            "REJECT": 84
+          },
+          "RET": {
+            "CALL": 2,
+            "REJECT": 88,
+            "RET": 300
+          },
+          "ROT": {
+            "JUMP_IF_NONZERO": 1,
+            "REJECT": 96,
+            "ROT": 309
+          },
+          "SETIX": {
+            "LOADI": 2,
+            "REJECT": 88,
+            "SETIX": 296
+          },
+          "SET_META": {
+            "JUMP_IF_ZERO": 1,
+            "MOD2": 1,
+            "REJECT": 94,
+            "SET_META": 326
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 3,
+            "LOOP_START": 1,
+            "REJECT": 106,
+            "SKIP_NEXT": 334
+          },
+          "SQUARE": {
+            "DIFF": 5,
+            "REJECT": 93,
+            "SQUARE": 313
+          },
+          "STORE": {
+            "LOAD": 1,
+            "LOOP_END": 1,
+            "REJECT": 74,
+            "STORE": 353
+          },
+          "STOREI": {
+            "INCIX": 1,
+            "LOADI": 4,
+            "REJECT": 76,
+            "STOREI": 322
+          },
+          "SUB2": {
+            "ADD2": 2,
+            "MUL2": 1,
+            "REJECT": 94,
+            "SUB2": 301
+          },
+          "SWAP": {
+            "LOAD": 2,
+            "REJECT": 92,
+            "SWAP": 364
+          }
+        },
+        "correct": 12351,
+        "rejected": 3542,
+        "rejection_rate": 0.221375,
+        "sync_rejected_traces": 47,
+        "total": 16000,
+        "wrong": 107,
+        "wrong_rate": 0.0066875
+      },
+      "offset_unique_2ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 399,
+            "MEAN": 3,
+            "REJECT": 41
+          },
+          "ADD2": {
+            "ADD2": 387,
+            "CLEAR_STACK": 7,
+            "REJECT": 44,
+            "SUB2": 2
+          },
+          "CALL": {
+            "CALL": 376,
+            "JUMP_IF_ZERO": 10,
+            "REJECT": 35,
+            "RET": 2
+          },
+          "CLEAR_STACK": {
+            "ADD2": 3,
+            "CLEAR_STACK": 392,
+            "REJECT": 42,
+            "SWAP": 6
+          },
+          "DIFF": {
+            "DIFF": 406,
+            "MEAN": 2,
+            "REJECT": 39,
+            "SQUARE": 2
+          },
+          "DIV2": {
+            "DIV2": 336,
+            "MOD2": 2,
+            "MUL2": 3,
+            "REJECT": 54
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 385,
+            "IF_GT_15_SQUARE": 8,
+            "NEGATE_IF_ODD": 1,
+            "REJECT": 48
+          },
+          "DUP": {
+            "DUP": 378,
+            "JUMP_IF_ODD": 1,
+            "POP": 6,
+            "REJECT": 39
+          },
+          "GETIX": {
+            "GETIX": 364,
+            "INCIX": 8,
+            "REJECT": 53
+          },
+          "HALT": {
+            "HALT": 388,
+            "JUMP": 1,
+            "NOP": 5,
+            "REJECT": 37
+          },
+          "IF_GT_15_SQUARE": {
+            "DOUBLE_IF_EVEN": 4,
+            "IF_GT_15_SQUARE": 359,
+            "PASS": 2,
+            "REJECT": 40
+          },
+          "INCIX": {
+            "INCIX": 407,
+            "REJECT": 50,
+            "STOREI": 7
+          },
+          "JUMP": {
+            "JUMP": 363,
+            "JUMP_IF_NONZERO": 3,
+            "REJECT": 45
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP": 5,
+            "JUMP_IF_NONZERO": 362,
+            "REJECT": 37,
+            "ROT": 3
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 10,
+            "JUMP_IF_ODD": 357,
+            "REJECT": 32
+          },
+          "JUMP_IF_ZERO": {
+            "CALL": 2,
+            "JUMP_IF_ZERO": 360,
+            "REJECT": 43,
+            "SET_META": 2
+          },
+          "LOAD": {
+            "LOAD": 364,
+            "REJECT": 34,
+            "STORE": 3,
+            "SWAP": 5
+          },
+          "LOADI": {
+            "LOADI": 379,
+            "REJECT": 46,
+            "SETIX": 1,
+            "STOREI": 3
+          },
+          "LOOP_END": {
+            "LOOP_END": 373,
+            "LOOP_START": 8,
+            "REJECT": 55,
+            "STORE": 2
+          },
+          "LOOP_START": {
+            "LOOP_END": 1,
+            "LOOP_START": 382,
+            "REJECT": 45,
+            "SKIP_NEXT": 4
+          },
+          "MEAN": {
+            "ADD": 4,
+            "MEAN": 365,
+            "REJECT": 50
+          },
+          "MOD2": {
+            "DIV2": 5,
+            "MOD2": 356,
+            "REJECT": 36,
+            "SET_META": 6
+          },
+          "MUL2": {
+            "MUL2": 387,
+            "REJECT": 39,
+            "SUB2": 7
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 3,
+            "NEGATE_IF_ODD": 390,
+            "PUSH": 3,
+            "REJECT": 49
+          },
+          "NOP": {
+            "HALT": 1,
+            "NOP": 351,
+            "REJECT": 32,
+            "RET": 8
+          },
+          "PASS": {
+            "IF_GT_15_SQUARE": 2,
+            "PASS": 389,
+            "REJECT": 39,
+            "SQUARE": 10
+          },
+          "POP": {
+            "POP": 358,
+            "PUSH": 4,
+            "REJECT": 45
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 4,
+            "PUSH": 351,
+            "REJECT": 46
+          },
+          "RET": {
+            "CALL": 5,
+            "NOP": 1,
+            "REJECT": 49,
+            "RET": 335
+          },
+          "ROT": {
+            "JUMP_IF_NONZERO": 4,
+            "REJECT": 49,
+            "ROT": 353
+          },
+          "SETIX": {
+            "LOADI": 3,
+            "REJECT": 44,
+            "SETIX": 339
+          },
+          "SET_META": {
+            "JUMP_IF_ZERO": 2,
+            "MOD2": 3,
+            "REJECT": 55,
+            "SET_META": 362
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 5,
+            "LOOP_START": 1,
+            "REJECT": 54,
+            "SKIP_NEXT": 384
+          },
+          "SQUARE": {
+            "DIFF": 6,
+            "REJECT": 48,
+            "SQUARE": 357
+          },
+          "STORE": {
+            "LOAD": 2,
+            "LOOP_END": 5,
+            "REJECT": 27,
+            "STORE": 395
+          },
+          "STOREI": {
+            "INCIX": 2,
+            "LOADI": 7,
+            "REJECT": 33,
+            "STOREI": 361
+          },
+          "SUB2": {
+            "ADD2": 4,
+            "MUL2": 2,
+            "REJECT": 48,
+            "SUB2": 344
+          },
+          "SWAP": {
+            "CLEAR_STACK": 1,
+            "LOAD": 7,
+            "REJECT": 37,
+            "SWAP": 413
+          }
+        },
+        "correct": 14107,
+        "rejected": 1639,
+        "rejection_rate": 0.1024375,
+        "sync_rejected_traces": 24,
+        "total": 16000,
+        "wrong": 254,
+        "wrong_rate": 0.015875
+      }
+    },
+    "skew_2pct": {
+      "affine_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "ADD": 455
+          },
+          "ADD2": {
+            "ADD2": 433
+          },
+          "CALL": {
+            "CALL": 430
+          },
+          "CLEAR_STACK": {
+            "CLEAR_STACK": 440
+          },
+          "DIFF": {
+            "DIFF": 435
+          },
+          "DIV2": {
+            "DIV2": 460
+          },
+          "DOUBLE_IF_EVEN": {
+            "DOUBLE_IF_EVEN": 417
+          },
+          "DUP": {
+            "DUP": 417
+          },
+          "GETIX": {
+            "GETIX": 450
+          },
+          "HALT": {
+            "HALT": 412
+          },
+          "IF_GT_15_SQUARE": {
+            "IF_GT_15_SQUARE": 420
+          },
+          "INCIX": {
+            "INCIX": 468
+          },
+          "JUMP": {
+            "JUMP": 403
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP_IF_NONZERO": 445
+          },
+          "JUMP_IF_ODD": {
+            "JUMP_IF_ODD": 403
+          },
+          "JUMP_IF_ZERO": {
+            "JUMP_IF_ZERO": 379
+          },
+          "LOAD": {
+            "LOAD": 418
+          },
+          "LOADI": {
+            "LOADI": 449
+          },
+          "LOOP_END": {
+            "LOOP_END": 399
+          },
+          "LOOP_START": {
+            "LOOP_START": 395
+          },
+          "MEAN": {
+            "MEAN": 423
+          },
+          "MOD2": {
+            "MOD2": 405
+          },
+          "MUL2": {
+            "MUL2": 406
+          },
+          "NEGATE_IF_ODD": {
+            "NEGATE_IF_ODD": 435
+          },
+          "NOP": {
+            "NOP": 413
+          },
+          "PASS": {
+            "PASS": 421
+          },
+          "POP": {
+            "POP": 413
+          },
+          "PUSH": {
+            "PUSH": 416
+          },
+          "RET": {
+            "RET": 438
+          },
+          "ROT": {
+            "ROT": 406
+          },
+          "SETIX": {
+            "SETIX": 425
+          },
+          "SET_META": {
+            "SET_META": 414
+          },
+          "SKIP_NEXT": {
+            "SKIP_NEXT": 401
+          },
+          "SQUARE": {
+            "SQUARE": 447
+          },
+          "STORE": {
+            "STORE": 405
+          },
+          "STOREI": {
+            "STOREI": 438
+          },
+          "SUB2": {
+            "SUB2": 387
+          },
+          "SWAP": {
+            "SWAP": 379
+          }
+        },
+        "correct": 16000,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 0,
+        "wrong_rate": 0.0
+      },
+      "first_match_4ms_comparison": {
+        "confusion_matrix": {
+          "ADD": {
+            "REJECT": 455
+          },
+          "ADD2": {
+            "CLEAR_STACK": 433
+          },
+          "CALL": {
+            "JUMP_IF_ZERO": 430
+          },
+          "CLEAR_STACK": {
+            "SWAP": 440
+          },
+          "DIFF": {
+            "MEAN": 435
+          },
+          "DIV2": {
+            "MUL2": 460
+          },
+          "DOUBLE_IF_EVEN": {
+            "IF_GT_15_SQUARE": 417
+          },
+          "DUP": {
+            "POP": 417
+          },
+          "GETIX": {
+            "INCIX": 450
+          },
+          "HALT": {
+            "NOP": 412
+          },
+          "IF_GT_15_SQUARE": {
+            "PASS": 420
+          },
+          "INCIX": {
+            "STOREI": 468
+          },
+          "JUMP": {
+            "HALT": 403
+          },
+          "JUMP_IF_NONZERO": {
+            "JUMP": 445
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 403
+          },
+          "JUMP_IF_ZERO": {
+            "SET_META": 379
+          },
+          "LOAD": {
+            "STORE": 418
+          },
+          "LOADI": {
+            "SETIX": 449
+          },
+          "LOOP_END": {
+            "LOOP_START": 399
+          },
+          "LOOP_START": {
+            "SKIP_NEXT": 395
+          },
+          "MEAN": {
+            "ADD": 423
+          },
+          "MOD2": {
+            "DIV2": 405
+          },
+          "MUL2": {
+            "SUB2": 406
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 435
+          },
+          "NOP": {
+            "RET": 413
+          },
+          "PASS": {
+            "SQUARE": 421
+          },
+          "POP": {
+            "PUSH": 413
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 416
+          },
+          "RET": {
+            "CALL": 438
+          },
+          "ROT": {
+            "JUMP_IF_NONZERO": 406
+          },
+          "SETIX": {
+            "SETIX": 425
+          },
+          "SET_META": {
+            "MOD2": 414
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 401
+          },
+          "SQUARE": {
+            "DIFF": 447
+          },
+          "STORE": {
+            "LOOP_END": 405
+          },
+          "STOREI": {
+            "LOADI": 438
+          },
+          "SUB2": {
+            "ADD2": 387
+          },
+          "SWAP": {
+            "LOAD": 379
+          }
+        },
+        "correct": 425,
+        "rejected": 455,
+        "rejection_rate": 0.0284375,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 15120,
+        "wrong_rate": 0.945
+      },
+      "offset_unique_1.5ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "REJECT": 455
+          },
+          "ADD2": {
+            "CLEAR_STACK": 433
+          },
+          "CALL": {
+            "REJECT": 430
+          },
+          "CLEAR_STACK": {
+            "SWAP": 440
+          },
+          "DIFF": {
+            "MEAN": 435
+          },
+          "DIV2": {
+            "MUL2": 460
+          },
+          "DOUBLE_IF_EVEN": {
+            "IF_GT_15_SQUARE": 417
+          },
+          "DUP": {
+            "POP": 417
+          },
+          "GETIX": {
+            "GETIX": 450
+          },
+          "HALT": {
+            "REJECT": 412
+          },
+          "IF_GT_15_SQUARE": {
+            "PASS": 420
+          },
+          "INCIX": {
+            "REJECT": 468
+          },
+          "JUMP": {
+            "REJECT": 403
+          },
+          "JUMP_IF_NONZERO": {
+            "REJECT": 445
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 403
+          },
+          "JUMP_IF_ZERO": {
+            "REJECT": 379
+          },
+          "LOAD": {
+            "STORE": 418
+          },
+          "LOADI": {
+            "REJECT": 449
+          },
+          "LOOP_END": {
+            "LOOP_START": 399
+          },
+          "LOOP_START": {
+            "SKIP_NEXT": 395
+          },
+          "MEAN": {
+            "ADD": 423
+          },
+          "MOD2": {
+            "DIV2": 405
+          },
+          "MUL2": {
+            "SUB2": 406
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 435
+          },
+          "NOP": {
+            "REJECT": 413
+          },
+          "PASS": {
+            "SQUARE": 421
+          },
+          "POP": {
+            "PUSH": 413
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 416
+          },
+          "RET": {
+            "REJECT": 438
+          },
+          "ROT": {
+            "REJECT": 406
+          },
+          "SETIX": {
+            "REJECT": 425
+          },
+          "SET_META": {
+            "REJECT": 414
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 401
+          },
+          "SQUARE": {
+            "DIFF": 447
+          },
+          "STORE": {
+            "LOOP_END": 405
+          },
+          "STOREI": {
+            "REJECT": 438
+          },
+          "SUB2": {
+            "ADD2": 387
+          },
+          "SWAP": {
+            "LOAD": 379
+          }
+        },
+        "correct": 450,
+        "rejected": 5975,
+        "rejection_rate": 0.3734375,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 9575,
+        "wrong_rate": 0.5984375
+      },
+      "offset_unique_2ms": {
+        "confusion_matrix": {
+          "ADD": {
+            "REJECT": 455
+          },
+          "ADD2": {
+            "CLEAR_STACK": 433
+          },
+          "CALL": {
+            "JUMP_IF_ZERO": 430
+          },
+          "CLEAR_STACK": {
+            "SWAP": 440
+          },
+          "DIFF": {
+            "MEAN": 435
+          },
+          "DIV2": {
+            "MUL2": 460
+          },
+          "DOUBLE_IF_EVEN": {
+            "IF_GT_15_SQUARE": 417
+          },
+          "DUP": {
+            "POP": 417
+          },
+          "GETIX": {
+            "GETIX": 450
+          },
+          "HALT": {
+            "REJECT": 412
+          },
+          "IF_GT_15_SQUARE": {
+            "PASS": 420
+          },
+          "INCIX": {
+            "INCIX": 468
+          },
+          "JUMP": {
+            "REJECT": 403
+          },
+          "JUMP_IF_NONZERO": {
+            "REJECT": 445
+          },
+          "JUMP_IF_ODD": {
+            "DUP": 403
+          },
+          "JUMP_IF_ZERO": {
+            "SET_META": 379
+          },
+          "LOAD": {
+            "STORE": 418
+          },
+          "LOADI": {
+            "LOADI": 449
+          },
+          "LOOP_END": {
+            "LOOP_START": 399
+          },
+          "LOOP_START": {
+            "SKIP_NEXT": 395
+          },
+          "MEAN": {
+            "ADD": 423
+          },
+          "MOD2": {
+            "DIV2": 405
+          },
+          "MUL2": {
+            "SUB2": 406
+          },
+          "NEGATE_IF_ODD": {
+            "DOUBLE_IF_EVEN": 435
+          },
+          "NOP": {
+            "RET": 413
+          },
+          "PASS": {
+            "SQUARE": 421
+          },
+          "POP": {
+            "PUSH": 413
+          },
+          "PUSH": {
+            "NEGATE_IF_ODD": 416
+          },
+          "RET": {
+            "CALL": 438
+          },
+          "ROT": {
+            "REJECT": 406
+          },
+          "SETIX": {
+            "SETIX": 425
+          },
+          "SET_META": {
+            "MOD2": 414
+          },
+          "SKIP_NEXT": {
+            "JUMP_IF_ODD": 401
+          },
+          "SQUARE": {
+            "DIFF": 447
+          },
+          "STORE": {
+            "LOOP_END": 405
+          },
+          "STOREI": {
+            "STOREI": 438
+          },
+          "SUB2": {
+            "ADD2": 387
+          },
+          "SWAP": {
+            "LOAD": 379
+          }
+        },
+        "correct": 2230,
+        "rejected": 2121,
+        "rejection_rate": 0.1325625,
+        "sync_rejected_traces": 0,
+        "total": 16000,
+        "wrong": 11649,
+        "wrong_rate": 0.7280625
+      }
+    }
+  },
+  "seed": 714,
+  "symbols_per_trace": 32,
+  "traces_per_scenario": 500
+}
