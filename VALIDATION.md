@@ -21,4 +21,6 @@ Total instructions executed: 70
 
 An earlier 1× live run during development decoded scheduler-delayed pauses into other valid opcodes. This motivated both the wider wire spacing and the pre-execution checksum, rather than relying only on timing-window rejection. Regression tests explicitly corrupt a `PUSH` timing into a valid `POP` timing and verify checksum rejection, as well as testing corrupt operands, every byte truncation of a sample frame, fragmented reads, invalid markers and timeouts.
 
+The first GitHub Actions run passed Linux tests and the optional WAV job, and exposed a Windows cp1252 output error in demo decoration after the tests passed. The CLI now escapes unsupported characters without changing the output encoding. Both the complete entry point and benchmark CLI also passed locally with `PYTHONIOENCODING=cp1252:strict`.
+
 This successful loopback run is not a measured network reliability rate. Synthetic benchmark percentages are symbol-level results for the stated noise models, not whole-program delivery guarantees. GitHub Actions provides separate Linux/Windows and Python-version checks; local verification alone does not establish their results.

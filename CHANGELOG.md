@@ -18,6 +18,7 @@ The module stays named `PauseLang_v0_7_13.py` for import compatibility.
 - Compute integer division without a floating-point intermediate, including large input integers.
 - Extract the original 28-test suite from the VM and expose independent discoverable tests. Add focused VM/compiler/timing, framed transport, checksum and WAV regressions; add Linux/Windows GitHub Actions coverage.
 - Add seeded timing-noise measurements and per-opcode confusion matrices. Report accepted wrong opcodes separately from rejects, including sync failures.
+- Escape unsupported CLI decoration on legacy output encodings (including redirected Windows cp1252) and write benchmark reports as UTF-8.
 - Encode the final WAV pause with a terminal click; validate WAV timing and sample-rate inputs; handle empty streams.
 
 ### TCP compatibility change

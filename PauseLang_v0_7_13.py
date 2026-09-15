@@ -1178,6 +1178,11 @@ class IoTDemos:
 # === MAIN ===
 
 if __name__ == "__main__":
+    import sys
+    # Redirected Windows output may use cp1252. Escape unsupported decoration
+    # without changing the caller's encoding or crashing an otherwise valid run.
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(errors='backslashreplace')
     print("Running PauseLang v0.7.14 test suite...\n")
     import unittest
     from pathlib import Path

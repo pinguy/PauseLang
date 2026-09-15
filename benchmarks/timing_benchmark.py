@@ -96,6 +96,8 @@ def summary(report):
 
 
 if __name__ == '__main__':
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(errors='backslashreplace')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--traces', type=int, default=500)
     parser.add_argument('--seed', type=int, default=714)
@@ -106,7 +108,7 @@ if __name__ == '__main__':
         parser.error('--traces must be positive')
     report = benchmark(args.traces, args.seed)
     if args.output:
-        args.output.write_text(json.dumps(report, indent=2, sort_keys=True)+'\n')
+        args.output.write_text(json.dumps(report, indent=2, sort_keys=True)+'\n', encoding='utf-8')
     if args.markdown:
-        args.markdown.write_text(summary(report))
+        args.markdown.write_text(summary(report), encoding='utf-8')
     print(summary(report))
